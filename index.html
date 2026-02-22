@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Network Live</title>
+    <link rel="icon" href="data:,"> <title>Roulotte Network Live</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -60,14 +60,15 @@
                 <div id="step-1">
                     <input type="text" id="reg-name" placeholder="Nombre de Usuario">
                     <input type="email" id="reg-email" placeholder="Correo">
-                    <input type="password" id="reg-pass" placeholder="Crea tu Contraseña VIP">
+                    <input type="password" id="reg-pass" placeholder="Contraseña VIP">
                     <button class="btn-send" style="width:100%" onclick="irAVerificar()">SIGUIENTE: VERIFICAR</button>
                 </div>
                 <div id="step-2" style="display:none; text-align:center;">
                     <p>Muestra los números:</p>
-                    <div id="reto-numeros" class="numeros-random">...</div>
-                    <video id="preview-record" autoplay muted playsinline style="width:100%; border-radius:10px; border:1px solid var(--accent);"></video>
-                    <button id="record-btn" class="btn-next" style="background:#e74c3c; margin-top:10px;" onclick="toggleGrabacion()">GRABAR VIDEO (5s)</button>
+                    <div id="reto-numeros" class="numeros-random" style="font-size:24px; color:var(--accent); font-weight:bold;">...</div>
+                    <video id="preview-record" autoplay muted playsinline style="width:100%; border-radius:10px; border:1px solid var(--accent); margin:10px 0;"></video>
+                    <button id="record-btn" class="btn-next" style="background:#e74c3c;" onclick="toggleGrabacion()">GRABAR VIDEO (5s)</button>
+                    <p id="record-status" style="font-size:11px; margin-top:5px; color:var(--accent);"></p>
                 </div>
             </div>
         </div>
@@ -75,33 +76,58 @@
 
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE"; 
+        const SUPA_KEY = "TU_ANON_KEY"; // PON TU ANON KEY AQUÍ
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
         let myStream, peer, myId, actualCall, dataConn, isVIP = false;
         let myIP = "";
 
         async function init() {
-            // Obtener IP del usuario
-            const res = await fetch('https://api.ipify.org?format=json');
-            const ipData = await res.json();
-            myIP = ipData.ip;
+            try {
+                // Obtener IP
+                const res = await fetch('https://api.ipify.org?format=json');
+                const ipData = await res.json();
+                myIP = ipData.ip;
 
-            // Verificar si la IP está baneada
-            const { data: ban } = await supa.from('banned_users').select('*').eq('ip_address', myIP).single();
-            if (ban) {
-                document.body.innerHTML = "<h1 style='color:red; text-align:center; padding-top:100px;'>ACCESO DENEGADO POR INFRINGIR NORMAS</h1>";
-                return;
+                // Verificar baneo con manejo de error 406
+                const { data: ban, error } = await supa.from('banned_users').select('ip_address').eq('ip_address', myIP).maybeSingle();
+                
+                if (ban) {
+                    document.body.innerHTML = "<h1 style='color:red; text-align:center; padding-top:100px; font-family:sans-serif;'>ACCESO DENEGADO</h1>";
+                    return;
+                }
+
+                // Verificar Auth
+                const { data: { user } } = await supa.auth.getUser();
+                if (user) {
+                    isVIP = true;
+                    actualizarInterfazVIP();
+                }
+
+                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('me').srcObject = myStream;
+                conectarPeer();
+            } catch (e) {
+                console.error("Init Error:", e);
+                alert("Asegúrate de dar permisos de cámara y tener internet.");
             }
-
-            myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('me').srcObject = myStream;
-            conectarPeer();
         }
 
         function conectarPeer() {
             myId = (isVIP ? 'vip-' : 'pub-') + Math.random().toString(36).substr(2, 7);
-            peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
+            
+            // CONFIGURACIÓN PARA 4G (STUN SERVERS)
+            peer = new Peer(myId, {
+                config: {
+                    'iceServers': [
+                        { url: 'stun:stun.l.google.com:19302' },
+                        { url: 'stun:stun1.l.google.com:19302' },
+                        { url: 'stun:stun2.l.google.com:19302' }
+                    ]
+                },
+                debug: 1
+            });
+
             peer.on('connection', c => { 
                 dataConn = c; 
                 c.on('data', d => {
@@ -109,32 +135,22 @@
                     else addMsg("them", d);
                 }); 
             });
-            peer.on('call', c => { c.answer(myStream); actualCall = c; c.on('stream', s => document.getElementById('remote').srcObject = s); });
-        }
 
-        async function reportarUsuario() {
-            if(!dataConn) return;
-            if(confirm("¿Reportar a este usuario por contenido inapropiado?")) {
-                dataConn.send({ type: 'report' });
-                alert("Usuario reportado. Si recibe 3 reportes será baneado.");
-                buscar(); // Saltar al siguiente
-            }
-        }
-
-        async function procesarReporteRecibido() {
-            let reports = parseInt(localStorage.getItem('reports_received') || 0) + 1;
-            localStorage.setItem('reports_received', reports);
-            if(reports >= 3) {
-                await supa.from('banned_users').insert([{ ip_address: myIP, reason: "3 Reportes de usuarios" }]);
-                location.reload();
-            }
+            peer.on('call', c => { 
+                c.answer(myStream); 
+                actualCall = c; 
+                c.on('stream', s => document.getElementById('remote').srcObject = s); 
+            });
         }
 
         async function buscar() {
             const tabla = isVIP ? 'vip_users' : 'profiles'; 
+            addMsg("them", "Buscando...");
             if(actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
+
             const { data } = await supa.from(tabla).select('peer_id').neq('peer_id', myId).limit(1);
+
             if (data && data[0]) {
                 const targetId = data[0].peer_id;
                 await supa.from(tabla).delete().eq('peer_id', targetId);
@@ -146,65 +162,91 @@
                 actualCall = peer.call(targetId, myStream);
                 actualCall.on('stream', s => document.getElementById('remote').srcObject = s);
             } else {
-                await supa.from(tabla).insert([{ peer_id: myId }]);
-                addMsg("them", "Buscando...");
+                await supa.from(tabla).upsert([{ peer_id: myId }]);
             }
         }
 
-        // --- FUNCIONES DE LOGIN / REGISTRO / MODAL (IGUALES A ANTERIOR) ---
+        async function reportarUsuario() {
+            if(!dataConn) return;
+            if(confirm("¿Reportar a este usuario?")) {
+                dataConn.send({ type: 'report' });
+                alert("Reportado. Al recibir 3 serás bloqueado.");
+                buscar();
+            }
+        }
+
+        async function procesarReporteRecibido() {
+            let r = parseInt(localStorage.getItem('reports_received') || 0) + 1;
+            localStorage.setItem('reports_received', r);
+            if(r >= 3) {
+                await supa.from('banned_users').insert([{ ip_address: myIP, reason: "3 reportes" }]);
+                location.reload();
+            }
+        }
+
         async function loginVIP() {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-pass').value;
-            const { error } = await supa.auth.signInWithPassword({ email, password: pass });
+            const e = document.getElementById('login-email').value;
+            const p = document.getElementById('login-pass').value;
+            const { error } = await supa.auth.signInWithPassword({ email: e, password: p });
             if (error) alert(error.message); else location.reload();
         }
+
         function logout() { supa.auth.signOut().then(() => location.reload()); }
+        
         function actualizarInterfazVIP() {
             document.getElementById('user-mode').innerText = "MODO: VIP 💎";
             document.getElementById('btn-vip-action').style.display = 'none';
             document.getElementById('btn-logout').style.display = 'block';
         }
+
         function irAVerificar() {
+            if(!document.getElementById('reg-pass').value) return alert("Escribe una contraseña");
             document.getElementById('step-1').style.display = 'none';
             document.getElementById('step-2').style.display = 'block';
             document.getElementById('preview-record').srcObject = myStream;
-            document.getElementById('reto-numeros').innerText = Math.floor(Math.random()*5+1) + " - " + Math.floor(Math.random()*5+1) + " - " + Math.floor(Math.random()*5+1); 
+            document.getElementById('reto-numeros').innerText = Math.floor(Math.random()*5+1) + " - " + Math.floor(Math.random()*5+1); 
         }
+
         function toggleGrabacion() {
-            const chunks = [];
-            const mediaRecorder = new MediaRecorder(myStream);
-            mediaRecorder.ondataavailable = e => chunks.push(e.data);
-            mediaRecorder.onstop = async () => {
+            let chunks = [];
+            const recorder = new MediaRecorder(myStream);
+            recorder.ondataavailable = e => chunks.push(e.data);
+            recorder.onstop = async () => {
                 const blob = new Blob(chunks, { type: 'video/mp4' });
-                const fileName = `v_${Date.now()}.mp4`;
-                await supa.storage.from('verifications').upload(fileName, blob);
+                const name = `v_${Date.now()}.mp4`;
+                await supa.storage.from('verifications').upload(name, blob);
                 await supa.from('verification_requests').insert([{
                     username: document.getElementById('reg-name').value,
                     email: document.getElementById('reg-email').value,
                     password: document.getElementById('reg-pass').value,
-                    video_url: fileName,
+                    video_url: name,
                     numbers: document.getElementById('reto-numeros').innerText
                 }]);
-                alert("Enviado."); closeModal();
+                alert("Solicitud enviada."); closeModal();
             };
-            mediaRecorder.start();
-            setTimeout(() => mediaRecorder.stop(), 5000);
+            recorder.start();
+            document.getElementById('record-status').innerText = "GRABANDO...";
+            setTimeout(() => recorder.stop(), 5000);
         }
+
+        function enviarMensaje() {
+            const i = document.getElementById('chat-input');
+            if (i.value && dataConn) { dataConn.send(i.value); addMsg("me", i.value); i.value = ""; }
+        }
+
+        function addMsg(t, x) {
+            const c = document.getElementById('chat');
+            c.innerHTML += `<div class="msg ${t}">${x}</div>`;
+            c.scrollTop = c.scrollHeight;
+        }
+
         function openModal() { document.getElementById('modal-vip').style.display = 'flex'; }
         function closeModal() { document.getElementById('modal-vip').style.display = 'none'; }
         function switchTab(t) {
             document.getElementById('section-login').style.display = t === 'login' ? 'block' : 'none';
             document.getElementById('section-reg').style.display = t === 'login' ? 'none' : 'block';
         }
-        function enviarMensaje() {
-            const i = document.getElementById('chat-input');
-            if (i.value && dataConn) { dataConn.send(i.value); addMsg("me", i.value); i.value = ""; }
-        }
-        function addMsg(t, x) {
-            const c = document.getElementById('chat');
-            c.innerHTML += `<div class="msg ${t}">${x}</div>`;
-            c.scrollTop = c.scrollHeight;
-        }
+
         window.onload = init;
     </script>
 </body>
