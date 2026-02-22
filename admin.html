@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin - Roulotte Control</title>
+    <style>
+        body { background: #000; color: #fff; font-family: sans-serif; padding: 20px; }
+        .card { background: #111; border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
+        .btn-verify { background: #2ecc71; color: #000; padding: 5px 10px; border: none; cursor: pointer; }
+        .btn-ban { background: #e74c3c; color: #fff; padding: 5px 10px; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Panel de Administración</h1>
+    
+    <div id="login-admin">
+        <input type="email" id="adm-email" placeholder="Admin Email">
+        <input type="password" id="adm-pass" placeholder="Contraseña">
+        <button onclick="loginAdmin()">Entrar</button>
+    </div>
+
+    <div id="admin-content" style="display:none;">
+        <h2>Solicitudes VIP Pendientes</h2>
+        <div id="requests-list">
+            <div class="card">
+                <p>Usuario: Juan123</p>
+                <video src="url_video_verificacion.mp4" width="200" controls></video>
+                <p>Reto: Dedos 2-5-1</p>
+                <button class="btn-verify">Aprobar VIP</button>
+                <button class="btn-ban">Rechazar/Ban</button>
+            </div>
+        </div>
+
+        <hr>
+        <h2>Gestionar Banners</h2>
+        <input type="text" placeholder="URL Imagen Banner Top">
+        <button>Actualizar Banners</button>
+    </div>
+
+    <script>
+        async function loginAdmin() {
+            // Lógica con supa.auth.signInWithPassword
+            // Si el email es el tuyo, mostrar admin-content
+        }
+    </script>
+</body>
+</html>
