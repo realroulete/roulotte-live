@@ -3,25 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Network HD</title>
-    
+    <title>Roulotte Live HD</title>
     <link rel="stylesheet" href="style.css">
-
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <header class="header">
-        <div class="logo">Roulotte Live</div>
-    </header>
-
-    <div class="ad-top">
-        PUBLICIDAD SUPERIOR • ESPACIO DISPONIBLE 728x90
-    </div>
+    <header class="header"><div class="logo">Roulotte Live</div></header>
+    <div class="ad-top">PUBLICIDAD SUPERIOR • 728x90</div>
 
     <main class="main-wrapper">
-        
         <aside class="ad-side">ADS</aside>
         
         <div class="content">
@@ -37,9 +29,13 @@
             </section>
 
             <section class="chat-area">
-                <div id="chat">
-                    <div class="msg-sys">> Iniciando hardware de video...</div>
+                <div id="chat"></div>
+                
+                <div class="chat-controls">
+                    <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                    <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
                 </div>
+                
                 <button class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
             </section>
         </div>
@@ -47,79 +43,79 @@
         <aside class="ad-side">ADS</aside>
     </main>
 
-    <div class="ad-bottom">
-        PUBLICIDAD INFERIOR • ROULOTTE PREMIUM 2026
-    </div>
-
-    <footer class="footer-final">
-        ROULOTTE NETWORK &copy; 2026 • TODOS LOS DERECHOS RESERVADOS
-    </footer>
+    <div class="ad-bottom">PUBLICIDAD INFERIOR • ROULOTTE PREMIUM 2026</div>
+    <footer class="footer-final">ROULOTTE NETWORK &copy; 2026 • TODOS LOS DERECHOS RESERVADOS</footer>
 
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-        let myStream, peer, myId, actualCall;
+        let myStream, peer, myId, actualCall, dataConn;
 
         async function init() {
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
-                addLog("Cámara conectada.");
+                addLog("Sistema listo. Pulsa siguiente.");
                 conectarPeer();
-            } catch (err) {
-                addLog("ERROR: Acceso a cámara denegado.");
-            }
+            } catch (err) { addLog("Error de cámara."); }
         }
 
         function conectarPeer() {
             myId = 'user-' + Math.random().toString(36).substr(2, 9);
             peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
-
-            peer.on('open', () => {
-                addLog("Listo para conectar.");
+            
+            peer.on('connection', conn => {
+                dataConn = conn;
+                dataConn.on('data', data => addLog("Pareja: " + data));
             });
 
             peer.on('call', call => {
                 call.answer(myStream);
                 actualCall = call;
-                call.on('stream', s => {
-                    document.getElementById('remote').srcObject = s;
-                    document.getElementById('status-tag').innerText = "EN VIVO ✅";
-                });
+                call.on('stream', s => document.getElementById('remote').srcObject = s);
             });
         }
 
         async function buscar() {
-            addLog("Buscando...");
+            addLog("Buscando nueva persona...");
             if(actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
-            document.getElementById('status-tag').innerText = "BUSCANDO...";
-
+            
             const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
-
-            if (data && data.length > 0) {
+            if (data?.[0]) {
                 const targetId = data[0].peer_id;
                 await supa.from('profiles').delete().eq('peer_id', targetId);
-                const call = peer.call(targetId, myStream);
-                actualCall = call;
-                call.on('stream', s => {
-                    document.getElementById('remote').srcObject = s;
-                    document.getElementById('status-tag').innerText = "EN VIVO ✅";
-                });
+                
+                // Conexión de Datos para Chat
+                dataConn = peer.connect(targetId);
+                dataConn.on('data', data => addLog("Pareja: " + data));
+                
+                // Conexión de Video
+                actualCall = peer.call(targetId, myStream);
+                actualCall.on('stream', s => document.getElementById('remote').srcObject = s);
             } else {
                 await supa.from('profiles').insert([{ peer_id: myId }]);
-                document.getElementById('status-tag').innerText = "ESPERANDO...";
+                addLog("Esperando a alguien...");
+            }
+        }
+
+        function enviarMensaje() {
+            const input = document.getElementById('chat-input');
+            const texto = input.value.trim();
+            if (texto && dataConn) {
+                dataConn.send(texto);
+                addLog("Tú: " + texto);
+                input.value = "";
             }
         }
 
         function addLog(txt) {
             const chat = document.getElementById('chat');
-            chat.innerHTML += `<div style="margin-bottom:5px; color:#555;">> ${txt}</div>`;
+            chat.innerHTML += `<div style="margin-bottom:5px;">${txt}</div>`;
             chat.scrollTop = chat.scrollHeight;
         }
-
         window.onload = init;
     </script>
 </body>
