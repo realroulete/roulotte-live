@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte VIP Live</title>
+    <title>Roulotte Network VIP</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,10 +11,10 @@
 <body>
 
     <header class="header"><div class="logo">Roulotte Live</div></header>
-    <div class="ad-top">ESPACIO PUBLICITARIO PREMIUM</div>
+    <div class="ad-top">PUBLICIDAD SUPERIOR</div>
 
     <main class="main-wrapper">
-        <aside class="ad-side">PUBLICIDAD</aside>
+        <aside class="ad-side">ADS</aside>
         
         <div class="content">
             <section class="video-area">
@@ -28,22 +28,28 @@
                 <div id="chat"></div>
                 
                 <div class="chat-controls">
-                    <div class="input-group">
-                        <button class="emoji-btn" onclick="toggleEmojis()">😀</button>
-                        <input type="text" id="chat-input" placeholder="Escribe aquí..." onkeypress="if(event.key==='Enter') enviarMensaje()">
-                        <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
+                    <div id="emoji-picker">
+                        <span onclick="addEmoji('😀')">😀</span><span onclick="addEmoji('😂')">😂</span>
+                        <span onclick="addEmoji('🔥')">🔥</span><span onclick="addEmoji('😍')">😍</span>
+                        <span onclick="addEmoji('👍')">👍</span><span onclick="addEmoji('👋')">👋</span>
+                        <span onclick="addEmoji('🍆')">🍆</span><span onclick="addEmoji('🍑')">🍑</span>
+                        <span onclick="addEmoji('😈')">😈</span><span onclick="addEmoji('💦')">💦</span>
+                        <span onclick="addEmoji('🤔')">🤔</span><span onclick="addEmoji('💯')">💯</span>
                     </div>
-                    <div id="emoji-picker" style="display:none; padding-top:10px; font-size:1.5rem; cursor:pointer;">
-                        <span onclick="addEmoji('😀')">😀</span> <span onclick="addEmoji('😂')">😂</span> <span onclick="addEmoji('🔥')">🔥</span> <span onclick="addEmoji('😍')">😍</span> <span onclick="addEmoji('👍')">👍</span> <span onclick="addEmoji('👋')">👋</span>
+
+                    <div class="input-container">
+                        <button class="emoji-trigger" onclick="toggleEmojis()">😊</button>
+                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <button class="btn-send-circle" onclick="enviarMensaje()">➔</button>
                     </div>
                 </div>
             </section>
         </div>
 
-        <aside class="ad-side">PUBLICIDAD</aside>
+        <aside class="ad-side">ADS</aside>
     </main>
 
-    <div class="ad-bottom">ANUNCIO INFERIOR 728x90</div>
+    <div class="ad-bottom">ANUNCIO INFERIOR</div>
     <footer class="footer-final">ROULOTTE NETWORK &copy; 2026</footer>
 
     <script>
@@ -58,18 +64,16 @@
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
                 conectarPeer();
-            } catch (err) { addMsg("them", "Error: Permite la cámara."); }
+            } catch (err) { addMsg("them", "Error de cámara."); }
         }
 
         function conectarPeer() {
             myId = 'u-' + Math.random().toString(36).substr(2, 7);
             peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
-            
             peer.on('connection', conn => {
                 dataConn = conn;
                 dataConn.on('data', data => addMsg("them", data));
             });
-
             peer.on('call', call => {
                 call.answer(myStream);
                 actualCall = call;
@@ -79,10 +83,9 @@
 
         async function buscar() {
             document.getElementById('chat').innerHTML = "";
-            addMsg("them", "Buscando nueva pareja...");
+            addMsg("them", "Buscando pareja...");
             if(actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
-            
             const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
             if (data?.[0]) {
                 const targetId = data[0].peer_id;
@@ -93,7 +96,7 @@
                 actualCall.on('stream', s => document.getElementById('remote').srcObject = s);
             } else {
                 await supa.from('profiles').insert([{ peer_id: myId }]);
-                addMsg("them", "Esperando conexión...");
+                addMsg("them", "Esperando...");
             }
         }
 
@@ -103,6 +106,7 @@
                 dataConn.send(input.value);
                 addMsg("me", input.value);
                 input.value = "";
+                document.getElementById('emoji-picker').style.display = 'none';
             }
         }
 
@@ -114,7 +118,7 @@
 
         function toggleEmojis() {
             const p = document.getElementById('emoji-picker');
-            p.style.display = p.style.display === 'none' ? 'block' : 'none';
+            p.style.display = p.style.display === 'grid' ? 'none' : 'grid';
         }
 
         function addEmoji(e) {
