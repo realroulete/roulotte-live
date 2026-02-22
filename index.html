@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Network</title>
+    <title>Roulotte Live VIP</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
-    <header class="header"><div class="logo">Roulotte Live</div></header>
-    <div class="ad-top">ESPACIO PUBLICITARIO</div>
+    <header class="header">
+        <div class="logo">Roulotte Live</div>
+        <div id="user-status" style="font-size: 12px; color: var(--accent);">Modo: Público</div>
+    </header>
 
     <main class="main-wrapper">
-        <aside class="ad-side">ADS</aside>
-        
         <div class="content">
             <section class="video-area">
                 <div class="video-box"><video id="me" autoplay muted playsinline></video></div>
@@ -24,102 +23,51 @@
 
             <section class="chat-area">
                 <div id="chat"></div>
-                
                 <div class="chat-controls">
                     <div id="emoji-picker">
-                        <span onclick="addEmoji('😀')">😀</span><span onclick="addEmoji('😂')">😂</span>
-                        <span onclick="addEmoji('🔥')">🔥</span><span onclick="addEmoji('😍')">😍</span>
-                        <span onclick="addEmoji('👍')">👍</span><span onclick="addEmoji('👋')">👋</span>
-                        <span onclick="addEmoji('😈')">😈</span><span onclick="addEmoji('💦')">💦</span>
+                        <span onclick="addEmoji('😀')">😀</span><span onclick="addEmoji('🔥')">🔥</span>
+                        <span onclick="addEmoji('👋')">👋</span><span onclick="addEmoji('💎')">💎</span>
                     </div>
                     <div class="input-container">
-                        <span style="cursor:pointer" onclick="toggleEmojis()">😊</span>
-                        <input type="text" id="chat-input" placeholder="Mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <input type="text" id="chat-input" placeholder="Mensaje...">
                         <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
                     </div>
                 </div>
-
                 <button class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
             </section>
         </div>
-
-        <aside class="ad-side">ADS</aside>
     </main>
 
-    <div class="ad-bottom">ESPACIO PUBLICITARIO</div>
-    <footer class="footer-final">ROULOTTE NETWORK &copy; 2026</footer>
-
     <script>
-        const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
-        const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
-
+        const supa = supabase.createClient("TU_URL", "TU_KEY");
         let myStream, peer, myId, actualCall, dataConn;
+        let isVIP = false; // Esto cambiará al loguearse
 
         async function init() {
-            try {
-                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('me').srcObject = myStream;
-                conectarPeer();
-            } catch (err) { addMsg("them", "Error de cámara."); }
+            myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('me').srcObject = myStream;
+            conectarPeer();
         }
 
         function conectarPeer() {
-            myId = 'u-' + Math.random().toString(36).substr(2, 7);
+            myId = (isVIP ? 'vip-' : 'pub-') + Math.random().toString(36).substr(2, 7);
             peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
-            peer.on('connection', conn => {
-                dataConn = conn;
-                dataConn.on('data', data => addMsg("them", data));
-            });
-            peer.on('call', call => {
-                call.answer(myStream);
-                actualCall = call;
-                call.on('stream', s => document.getElementById('remote').srcObject = s);
-            });
+            // ... (Lógica de peer.on similar a la anterior)
         }
 
         async function buscar() {
-            document.getElementById('chat').innerHTML = "";
-            addMsg("them", "Buscando...");
-            if(actualCall) actualCall.close();
-            document.getElementById('remote').srcObject = null;
-            const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
+            const tabla = isVIP ? 'vip_users' : 'profiles'; 
+            // Buscamos solo en nuestra "sala" (VIP con VIP, Público con Público)
+            const { data } = await supa.from(tabla).select('peer_id').neq('peer_id', myId).limit(1);
+            
             if (data?.[0]) {
                 const targetId = data[0].peer_id;
-                await supa.from('profiles').delete().eq('peer_id', targetId);
-                dataConn = peer.connect(targetId);
-                dataConn.on('data', data => addMsg("them", data));
-                actualCall = peer.call(targetId, myStream);
-                actualCall.on('stream', s => document.getElementById('remote').srcObject = s);
+                await supa.from(tabla).delete().eq('peer_id', targetId);
+                // Llamada...
             } else {
-                await supa.from('profiles').insert([{ peer_id: myId }]);
-                addMsg("them", "Esperando pareja...");
+                await supa.from(tabla).insert([{ peer_id: myId }]);
             }
         }
-
-        function enviarMensaje() {
-            const input = document.getElementById('chat-input');
-            if (input.value.trim() && dataConn) {
-                dataConn.send(input.value);
-                addMsg("me", input.value);
-                input.value = "";
-                document.getElementById('emoji-picker').style.display = 'none';
-            }
-        }
-
-        function addMsg(type, text) {
-            const chat = document.getElementById('chat');
-            chat.innerHTML += `<div class="msg ${type}">${text}</div>`;
-            chat.scrollTop = chat.scrollHeight;
-        }
-
-        function toggleEmojis() {
-            const p = document.getElementById('emoji-picker');
-            p.style.display = p.style.display === 'grid' ? 'none' : 'grid';
-        }
-
-        function addEmoji(e) { document.getElementById('chat-input').value += e; }
-
         window.onload = init;
     </script>
 </body>
