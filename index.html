@@ -3,73 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Network HD</title>
+    <title>Roulotte Live</title>
     
-    <style>
-        :root { --accent: #f1c40f; --danger: #e74c3c; --bg: #000; --gray: #0a0a0a; }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { 
-            background: var(--bg); 
-            color: #fff; 
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            display: flex; 
-            flex-direction: column; 
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Bloques de Publicidad y Header */
-        .header { height: 50px; background: #000; border-bottom: 1px solid #222; display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
-        .logo { color: var(--accent); font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
-        
-        .ad-top { height: 45px; background: #080808; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #555; flex-shrink: 0; }
-        .ad-bottom { height: 50px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #555; flex-shrink: 0; }
-        
-        .footer { height: 30px; background: #000; border-top: 1px solid #111; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #333; flex-shrink: 0; }
-
-        /* Contenedor Principal */
-        .main-layout { display: flex; flex: 1; position: relative; }
-
-        /* Banners Laterales */
-        .ad-side { width: 100px; background: #000; border: 1px solid #111; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 10px; writing-mode: vertical-rl; flex-shrink: 0; }
-
-        /* Grid de la App */
-        .app-container { flex: 1; display: flex; background: #000; }
-
-        /* Columna de Video (50%) */
-        .video-col { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #222; }
-        .video-box { flex: 1; position: relative; background: #050505; border-bottom: 1px solid #222; overflow: hidden; }
-        video { width: 100%; height: 100%; object-fit: cover; background: #000; }
-        
-        .label { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 5px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid var(--accent); z-index: 10; }
-
-        /* Columna de Chat (50%) */
-        .chat-col { width: 50%; display: flex; flex-direction: column; background: var(--gray); }
-        #chat-window { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
-        
-        .msg { padding: 10px; border-radius: 8px; max-width: 85%; word-wrap: break-word; }
-        .msg.sys { background: rgba(241, 196, 15, 0.1); color: var(--accent); align-self: center; font-size: 11px; border: 1px dashed var(--accent); width: 100%; text-align: center; }
-        .msg.me { background: #222; align-self: flex-end; }
-        .msg.them { background: #111; border: 1px solid #222; align-self: flex-start; }
-
-        /* Controles Inferiores */
-        .chat-input { padding: 12px; background: #000; border-top: 1px solid #222; display: flex; gap: 10px; }
-        input { flex: 1; background: #0a0a0a; border: 1px solid #333; padding: 12px; color: #fff; border-radius: 5px; outline: none; }
-        
-        .btn-next { width: 100%; padding: 25px; background: var(--danger); color: #fff; border: none; font-size: 1.4rem; font-weight: 900; cursor: pointer; text-transform: uppercase; }
-
-        /* RESPONSIVE MÓVIL */
-        @media (max-width: 800px) {
-            .ad-side { display: none; }
-            .app-container { flex-direction: column; }
-            .video-col { width: 100%; height: 60vh; border-right: none; }
-            .chat-col { width: 100%; height: 50vh; }
-            body { overflow-y: auto; }
-            .main-layout { display: block; overflow-y: auto; }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -77,119 +13,63 @@
 <body>
 
     <header class="header"><div class="logo">Roulotte Live</div></header>
-    <div class="ad-top">PUBLICIDAD SUPERIOR • ESPACIO PARA BANNER 728x90</div>
+    <div class="ad-top">PUBLICIDAD SUPERIOR</div>
 
     <main class="main-layout">
-        <aside class="ad-side">BANNER LATERAL IZQUIERDO</aside>
+        <aside class="ad-side">BANNER LATERAL</aside>
         
         <div class="app-container">
             <section class="video-col">
-                <div class="video-box">
-                    <div class="label">TU CÁMARA</div>
-                    <video id="localVideo" autoplay muted playsinline></video>
-                </div>
-                <div class="video-box">
-                    <div class="label" id="status-txt">SISTEMA: OK</div>
-                    <video id="remoteVideo" autoplay playsinline></video>
-                </div>
+                <div class="video-box"><video id="localVideo" autoplay muted playsinline></video></div>
+                <div class="video-box"><video id="remoteVideo" autoplay playsinline></video></div>
             </section>
 
             <section class="chat-col">
-                <div id="chat-window">
-                    <div class="msg sys">Iniciando hardware de video... Por favor, acepta el permiso.</div>
-                </div>
-                <div class="chat-input">
-                    <input type="text" id="msg-input" placeholder="Escribe algo..." onkeypress="if(event.key==='Enter') send()">
-                </div>
+                <div id="chat-window"><div class="msg sys">Cargando cámara...</div></div>
                 <button class="btn-next" onclick="next()">SIGUIENTE PERSONA ➔</button>
             </section>
         </div>
 
-        <aside class="ad-side">BANNER LATERAL DERECHO</aside>
+        <aside class="ad-side">BANNER LATERAL</aside>
     </main>
 
-    <div class="ad-bottom">PUBLICIDAD INFERIOR • ESPACIO PARA BANNER</div>
-    <footer class="footer">ROULOTTE NETWORK &copy; 2026</footer>
+    <div class="ad-bottom">PUBLICIDAD INFERIOR</div>
 
     <script>
         const URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const db = supabase.createClient(URL, KEY, { auth: { persistSession: false } });
 
-        let localStream, peer, myId, currentCall, dataConn;
+        let localStream, peer, myId;
 
-        // Auto-arranque de cámara
         async function start() {
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('localVideo').srcObject = localStream;
-                addMsg("Cámara activada correctamente.", "sys");
-                initNet();
+                initPeer();
             } catch (e) {
-                console.error(e);
-                addMsg("ERROR: No se pudo acceder a la cámara. Revisa el candado de la URL.", "sys");
+                document.querySelector('.msg.sys').innerText = "Error: Activa la cámara en el candado de la URL.";
             }
         }
 
-        function initNet() {
+        function initPeer() {
             myId = 'rlt-' + Math.floor(Math.random() * 99999);
             peer = new Peer(myId);
-            peer.on('call', call => { call.answer(localStream); handleRemote(call); });
-            peer.on('connection', conn => {
-                dataConn = conn;
-                dataConn.on('data', d => addMsg(d, 'them'));
-            });
+            peer.on('call', call => { call.answer(localStream); call.on('stream', s => document.getElementById('remoteVideo').srcObject = s;); });
         }
 
         async function next() {
-            document.getElementById('status-txt').innerText = "BUSCANDO...";
-            if (currentCall) currentCall.close();
-            document.getElementById('remoteVideo').srcObject = null;
-            
-            await db.from('profiles').delete().eq('peer_id', myId);
+            // Lógica de búsqueda simplificada
             const { data } = await db.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
-            
-            if (data && data.length > 0) {
-                const pId = data[0].peer_id;
-                await db.from('profiles').delete().eq('peer_id', pId);
-                handleRemote(peer.call(pId, localStream));
-                dataConn = peer.connect(pId);
-                dataConn.on('data', d => addMsg(d, 'them'));
+            if (data?.[0]) {
+                const call = peer.call(data[0].peer_id, localStream);
+                call.on('stream', s => document.getElementById('remoteVideo').srcObject = s);
             } else {
                 await db.from('profiles').insert([{ peer_id: myId }]);
-                document.getElementById('status-txt').innerText = "ESPERANDO...";
             }
         }
 
-        function handleRemote(call) {
-            currentCall = call;
-            call.on('stream', s => {
-                const rv = document.getElementById('remoteVideo');
-                rv.srcObject = s;
-                document.getElementById('status-txt').innerText = "EN VIVO ✅";
-            });
-        }
-
-        function send() {
-            const i = document.getElementById('msg-input');
-            if (i.value.trim() && dataConn) {
-                dataConn.send(i.value);
-                addMsg(i.value, 'me');
-                i.value = "";
-            }
-        }
-
-        function addMsg(t, type) {
-            const w = document.getElementById('chat-window');
-            const d = document.createElement('div');
-            d.className = `msg ${type}`;
-            d.innerText = t;
-            w.appendChild(d);
-            w.scrollTop = w.scrollHeight;
-        }
-
-        // Ejecutar al cargar
-        document.addEventListener('DOMContentLoaded', start);
+        window.onload = start;
     </script>
 </body>
 </html>
