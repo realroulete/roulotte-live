@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Network VIP</title>
+    <title>Roulotte Network</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,20 +11,18 @@
 <body>
 
     <header class="header"><div class="logo">Roulotte Live</div></header>
-    <div class="ad-top">PUBLICIDAD SUPERIOR</div>
+    <div class="ad-top">ESPACIO PUBLICITARIO</div>
 
     <main class="main-wrapper">
         <aside class="ad-side">ADS</aside>
         
         <div class="content">
             <section class="video-area">
-                <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
-                <div class="video-box"><div id="status-tag" class="label">BUSCANDO...</div><video id="remote" autoplay playsinline></video></div>
+                <div class="video-box"><video id="me" autoplay muted playsinline></video></div>
+                <div class="video-box"><video id="remote" autoplay playsinline></video></div>
             </section>
 
             <section class="chat-area">
-                <button class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
-                
                 <div id="chat"></div>
                 
                 <div class="chat-controls">
@@ -32,24 +30,23 @@
                         <span onclick="addEmoji('😀')">😀</span><span onclick="addEmoji('😂')">😂</span>
                         <span onclick="addEmoji('🔥')">🔥</span><span onclick="addEmoji('😍')">😍</span>
                         <span onclick="addEmoji('👍')">👍</span><span onclick="addEmoji('👋')">👋</span>
-                        <span onclick="addEmoji('🍆')">🍆</span><span onclick="addEmoji('🍑')">🍑</span>
                         <span onclick="addEmoji('😈')">😈</span><span onclick="addEmoji('💦')">💦</span>
-                        <span onclick="addEmoji('🤔')">🤔</span><span onclick="addEmoji('💯')">💯</span>
                     </div>
-
                     <div class="input-container">
-                        <button class="emoji-trigger" onclick="toggleEmojis()">😊</button>
-                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
-                        <button class="btn-send-circle" onclick="enviarMensaje()">➔</button>
+                        <span style="cursor:pointer" onclick="toggleEmojis()">😊</span>
+                        <input type="text" id="chat-input" placeholder="Mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
                     </div>
                 </div>
+
+                <button class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
             </section>
         </div>
 
         <aside class="ad-side">ADS</aside>
     </main>
 
-    <div class="ad-bottom">ANUNCIO INFERIOR</div>
+    <div class="ad-bottom">ESPACIO PUBLICITARIO</div>
     <footer class="footer-final">ROULOTTE NETWORK &copy; 2026</footer>
 
     <script>
@@ -83,7 +80,7 @@
 
         async function buscar() {
             document.getElementById('chat').innerHTML = "";
-            addMsg("them", "Buscando pareja...");
+            addMsg("them", "Buscando...");
             if(actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
             const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
@@ -96,7 +93,7 @@
                 actualCall.on('stream', s => document.getElementById('remote').srcObject = s);
             } else {
                 await supa.from('profiles').insert([{ peer_id: myId }]);
-                addMsg("them", "Esperando...");
+                addMsg("them", "Esperando pareja...");
             }
         }
 
@@ -121,9 +118,7 @@
             p.style.display = p.style.display === 'grid' ? 'none' : 'grid';
         }
 
-        function addEmoji(e) {
-            document.getElementById('chat-input').value += e;
-        }
+        function addEmoji(e) { document.getElementById('chat-input').value += e; }
 
         window.onload = init;
     </script>
