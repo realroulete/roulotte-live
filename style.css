@@ -1,47 +1,40 @@
-:root { --accent: #f1c40f; --danger: #e74c3c; --bg: #000; --gray: #0a0a0a; }
-
+:root { --accent: #f1c40f; --danger: #e74c3c; --bg: #000; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body { 
-    background: var(--bg); 
-    color: #fff; 
-    font-family: 'Segoe UI', Roboto, sans-serif;
-    display: flex; 
-    flex-direction: column; 
-    min-height: 100vh;
+    background: var(--bg); color: #fff; font-family: sans-serif;
+    display: flex; flex-direction: column; min-height: 100vh;
 }
 
-.header { height: 50px; background: #000; border-bottom: 1px solid #222; display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
-.logo { color: var(--accent); font-weight: 900; letter-spacing: 2px; }
+.header { height: 50px; border-bottom: 1px solid #222; display: flex; align-items: center; padding: 0 20px; }
+.logo { color: var(--accent); font-weight: bold; text-transform: uppercase; }
 
-.ad-top { height: 45px; background: #080808; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #555; }
-.ad-bottom { height: 50px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #555; }
+/* Contenedor con scroll para móviles */
+.main-wrapper { 
+    display: flex; flex: 1; 
+}
 
-.main-layout { display: flex; flex: 1; }
+.ad-side { width: 100px; background: #080808; display: flex; align-items: center; justify-content: center; color: #222; font-size: 10px; writing-mode: vertical-rl; }
 
-.ad-side { width: 100px; background: #000; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 10px; writing-mode: vertical-rl; flex-shrink: 0; border: 1px solid #111; }
+.content { flex: 1; display: flex; flex-direction: row; }
 
-.app-container { flex: 1; display: flex; background: #000; }
-
-.video-col { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #222; }
+/* Simetría 50/50 */
+.video-area { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #222; }
 .video-box { flex: 1; position: relative; background: #050505; border-bottom: 1px solid #222; }
-video { width: 100%; height: 100%; object-fit: cover; background: #000; }
+video { width: 100%; height: 100%; object-fit: cover; }
 
-.chat-col { width: 50%; display: flex; flex-direction: column; background: var(--gray); }
-#chat-window { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.chat-area { width: 50%; display: flex; flex-direction: column; background: #0a0a0a; }
+#chat { flex: 1; padding: 15px; overflow-y: auto; font-size: 13px; }
 
-.msg { padding: 10px; border-radius: 8px; max-width: 85%; }
-.msg.sys { color: var(--accent); border: 1px dashed var(--accent); text-align: center; width: 100%; font-size: 11px; }
-.msg.me { background: #222; align-self: flex-end; }
-.msg.them { background: #111; border: 1px solid #222; align-self: flex-start; }
+.btn-next { padding: 25px; background: var(--danger); color: #fff; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; }
 
-.btn-next { width: 100%; padding: 25px; background: var(--danger); color: #fff; border: none; font-size: 1.4rem; font-weight: 900; cursor: pointer; }
+/* Publicidad inferior */
+.ad-bottom { height: 50px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; }
 
-/* FIX MÓVIL: Scroll vertical real */
 @media (max-width: 800px) {
     .ad-side { display: none; }
-    .main-layout { display: block; overflow-y: auto; }
-    .app-container { flex-direction: column; height: auto; }
-    .video-col { width: 100%; height: 60vh; }
-    .chat-col { width: 100%; height: 50vh; }
+    .main-wrapper { display: block; overflow-y: auto; }
+    .content { flex-direction: column; }
+    .video-area { width: 100%; height: 60vh; }
+    .chat-area { width: 100%; height: 40vh; }
 }
