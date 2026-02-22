@@ -1,0 +1,47 @@
+:root { --accent: #f1c40f; --danger: #e74c3c; --bg: #000; --gray: #0a0a0a; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body { 
+    background: var(--bg); 
+    color: #fff; 
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    display: flex; 
+    flex-direction: column; 
+    min-height: 100vh;
+}
+
+.header { height: 50px; background: #000; border-bottom: 1px solid #222; display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
+.logo { color: var(--accent); font-weight: 900; letter-spacing: 2px; }
+
+.ad-top { height: 45px; background: #080808; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #555; }
+.ad-bottom { height: 50px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #555; }
+
+.main-layout { display: flex; flex: 1; }
+
+.ad-side { width: 100px; background: #000; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 10px; writing-mode: vertical-rl; flex-shrink: 0; border: 1px solid #111; }
+
+.app-container { flex: 1; display: flex; background: #000; }
+
+.video-col { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #222; }
+.video-box { flex: 1; position: relative; background: #050505; border-bottom: 1px solid #222; }
+video { width: 100%; height: 100%; object-fit: cover; background: #000; }
+
+.chat-col { width: 50%; display: flex; flex-direction: column; background: var(--gray); }
+#chat-window { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+
+.msg { padding: 10px; border-radius: 8px; max-width: 85%; }
+.msg.sys { color: var(--accent); border: 1px dashed var(--accent); text-align: center; width: 100%; font-size: 11px; }
+.msg.me { background: #222; align-self: flex-end; }
+.msg.them { background: #111; border: 1px solid #222; align-self: flex-start; }
+
+.btn-next { width: 100%; padding: 25px; background: var(--danger); color: #fff; border: none; font-size: 1.4rem; font-weight: 900; cursor: pointer; }
+
+/* FIX MÓVIL: Scroll vertical real */
+@media (max-width: 800px) {
+    .ad-side { display: none; }
+    .main-layout { display: block; overflow-y: auto; }
+    .app-container { flex-direction: column; height: auto; }
+    .video-col { width: 100%; height: 60vh; }
+    .chat-col { width: 100%; height: 50vh; }
+}
