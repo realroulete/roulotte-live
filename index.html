@@ -15,6 +15,7 @@
     <header class="header">
         <div class="logo">Roulotte Live</div>
     </header>
+
     <div class="ad-top">
         PUBLICIDAD SUPERIOR • ESPACIO DISPONIBLE 728x90
     </div>
@@ -37,7 +38,7 @@
 
             <section class="chat-area">
                 <div id="chat">
-                    <div class="msg sys">Iniciando hardware... por favor acepta los permisos.</div>
+                    <div class="msg-sys">> Iniciando hardware de video...</div>
                 </div>
                 <button class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
             </section>
@@ -50,15 +51,17 @@
         PUBLICIDAD INFERIOR • ROULOTTE PREMIUM 2026
     </div>
 
+    <footer class="footer-final">
+        ROULOTTE NETWORK &copy; 2026 • TODOS LOS DERECHOS RESERVADOS
+    </footer>
+
     <script>
-        // Configuración de Supabase (Key actualizada)
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
         let myStream, peer, myId, actualCall;
 
-        // Inicio automático de la cámara
         async function init() {
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -67,17 +70,15 @@
                 conectarPeer();
             } catch (err) {
                 addLog("ERROR: Acceso a cámara denegado.");
-                console.error(err);
             }
         }
 
         function conectarPeer() {
             myId = 'user-' + Math.random().toString(36).substr(2, 9);
-            // Configuración segura para GitHub Pages (HTTPS)
             peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
 
             peer.on('open', () => {
-                addLog("Conectado al servidor. Listo para buscar.");
+                addLog("Listo para conectar.");
             });
 
             peer.on('call', call => {
@@ -91,12 +92,11 @@
         }
 
         async function buscar() {
-            addLog("Buscando pareja...");
+            addLog("Buscando...");
             if(actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
             document.getElementById('status-tag').innerText = "BUSCANDO...";
 
-            // Lógica de emparejamiento con Supabase
             const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
 
             if (data && data.length > 0) {
@@ -116,7 +116,7 @@
 
         function addLog(txt) {
             const chat = document.getElementById('chat');
-            chat.innerHTML += `<div style="margin-bottom:5px;">> ${txt}</div>`;
+            chat.innerHTML += `<div style="margin-bottom:5px; color:#555;">> ${txt}</div>`;
             chat.scrollTop = chat.scrollHeight;
         }
 
