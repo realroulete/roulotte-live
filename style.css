@@ -59,14 +59,10 @@ video { width: 100%; height: 100%; object-fit: cover; }
 
 /* RESPONSIVE MÓVIL */
 @media (max-width: 800px) {
-    body { overflow-y: auto; height: auto; }
-    .main-wrapper { display: block; }
-    .content { flex-direction: column; }
-    .video-area { width: 100%; height: 500px; }
-    .chat-area { width: 100%; height: 500px; }
-    .ad-side { display: none; }
-    
-    /* En móvil: Botón Siguiente ARRIBA del chat y VERDE */
-    .chat-area { flex-direction: column; }
-    .btn-next { order: -1; background: var(--success); color: #000; }
+    /* ... resto de reglas ... */
+    .btn-next { 
+        order: -1; 
+        background: #2ecc71 !important; /* Verde forzado */
+        color: #000; 
+    }
 }
