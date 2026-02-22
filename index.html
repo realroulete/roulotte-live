@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roulotte HD - GitHub Mirror</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
+        .layout { display: flex; flex-direction: column; height: 100vh; }
+        .header { height: 60px; border-bottom: 2px solid #222; display: flex; align-items: center; padding: 0 20px; background: #000; }
+        .logo { color: #f1c40f; font-weight: 900; font-size: 1.4rem; letter-spacing: 2px; }
+        .main-content { display: flex; flex: 1; overflow: hidden; }
+        .banner-v { width: 140px; background: #080808; border: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: center; color: #444; font-size: 10px; writing-mode: vertical-rl; }
+        .app-area { display: flex; flex: 1; background: #000; }
+        .video-side { width: 60%; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .v-box { flex: 1; background: #050505; border: 2px solid #333; border-radius: 15px; overflow: hidden; position: relative; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .status-tag { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); border: 1px solid #f1c40f; color: #f1c40f; padding: 4px 10px; border-radius: 20px; font-size: 10px; z-index: 5; }
+        .chat-side { flex: 1; display: flex; flex-direction: column; background: #0a0a0a; border-left: 1px solid #222; }
+        #messages { flex: 1; padding: 15px; overflow-y: auto; font-size: 13px; color: #666; }
+        .btn-next { width: 100%; padding: 25px; background: #ff4444; color: #fff; border: none; font-size: 1.5rem; font-weight: 900; cursor: pointer; }
+        @media (max-width: 900px) { .banner-v { display: none; } .app-area { flex-direction: column; } .video-side { width: 100%; height: 60vh; } }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <header class="header"><div class="logo">ROULOTTE HD</div></header>
+    <div class="main-content">
+        <aside class="banner-v">PUBLICIDAD DISPONIBLE</aside>
+        <main class="app-area">
+            <section class="video-side">
+                <div class="v-box"><div class="status-tag">TÚ (HD)</div><video id="localVideo" autoplay muted playsinline></video></div>
+                <div class="v-box"><div class="status-tag" id="sys-status">SISTEMA: OK</div><video id="remoteVideo" autoplay playsinline></video></div>
+            </section>
+            <section class="chat-side">
+                <div id="messages">Conexión establecida...</div>
+                <button class="btn-next" onclick="nextPerson()">SIGUIENTE ➔</button>
+            </section>
+        </main>
+        <aside class="banner-v">PUBLICIDAD DISPONIBLE</aside>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
+
+    const db = supabase.createClient(SB_URL, SB_KEY);
+    let localStream, peer, myId, currentCall;
+
+    async function init() {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { width: 1280, height: 720 }, audio: true 
+            });
+            document.getElementById('localVideo').srcObject = localStream;
+            myId = 'rlt-' + Math.floor(Math.random() * 999999);
+            peer = new Peer(myId);
+            peer.on('call', call => { call.answer(localStream); setupRemoteStream(call); });
+        } catch (e) { document.getElementById('sys-status').innerText = "ERROR CÁMARA"; }
+    }
+
+    async function nextPerson() {
+        document.getElementById('sys-status').innerText = "BUSCANDO...";
+        if (currentCall) currentCall.close();
+        document.getElementById('remoteVideo').srcObject = null;
+        await db.from('profiles').delete().eq('peer_id', myId);
+        const { data } = await db.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
+        if (data && data.length > 0) {
+            const pId = data[0].peer_id;
+            const { error } = await db.from('profiles').delete().eq('peer_id', pId);
+            if(!error) setupRemoteStream(peer.call(pId, localStream));
+            else nextPerson();
+        } else {
+            await db.from('profiles').insert([{ peer_id: myId }]);
+            document.getElementById('sys-status').innerText = "ESPERANDO...";
+        }
+    }
+
+    function setupRemoteStream(call) {
+        currentCall = call;
+        call.on('stream', s => {
+            const rv = document.getElementById('remoteVideo');
+            rv.srcObject = s;
+            rv.play();
+            document.getElementById('sys-status').innerText = "EN VIVO ✅";
+        });
+    }
+
+    init();
+</script>
+</body>
+</html>
