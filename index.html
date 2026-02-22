@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live HD</title>
+    <title>Roulotte VIP Live</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,40 +11,40 @@
 <body>
 
     <header class="header"><div class="logo">Roulotte Live</div></header>
-    <div class="ad-top">PUBLICIDAD SUPERIOR • 728x90</div>
+    <div class="ad-top">ESPACIO PUBLICITARIO PREMIUM</div>
 
     <main class="main-wrapper">
-        <aside class="ad-side">ADS</aside>
+        <aside class="ad-side">PUBLICIDAD</aside>
         
         <div class="content">
             <section class="video-area">
-                <div class="video-box">
-                    <div class="label">TÚ</div>
-                    <video id="me" autoplay muted playsinline></video>
-                </div>
-                <div class="video-box">
-                    <div id="status-tag" class="label">SISTEMA: OK</div>
-                    <video id="remote" autoplay playsinline></video>
-                </div>
+                <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
+                <div class="video-box"><div id="status-tag" class="label">BUSCANDO...</div><video id="remote" autoplay playsinline></video></div>
             </section>
 
             <section class="chat-area">
+                <button class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
+                
                 <div id="chat"></div>
                 
                 <div class="chat-controls">
-                    <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
-                    <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
+                    <div class="input-group">
+                        <button class="emoji-btn" onclick="toggleEmojis()">😀</button>
+                        <input type="text" id="chat-input" placeholder="Escribe aquí..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
+                    </div>
+                    <div id="emoji-picker" style="display:none; padding-top:10px; font-size:1.5rem; cursor:pointer;">
+                        <span onclick="addEmoji('😀')">😀</span> <span onclick="addEmoji('😂')">😂</span> <span onclick="addEmoji('🔥')">🔥</span> <span onclick="addEmoji('😍')">😍</span> <span onclick="addEmoji('👍')">👍</span> <span onclick="addEmoji('👋')">👋</span>
+                    </div>
                 </div>
-                
-                <button class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
             </section>
         </div>
 
-        <aside class="ad-side">ADS</aside>
+        <aside class="ad-side">PUBLICIDAD</aside>
     </main>
 
-    <div class="ad-bottom">PUBLICIDAD INFERIOR • ROULOTTE PREMIUM 2026</div>
-    <footer class="footer-final">ROULOTTE NETWORK &copy; 2026 • TODOS LOS DERECHOS RESERVADOS</footer>
+    <div class="ad-bottom">ANUNCIO INFERIOR 728x90</div>
+    <footer class="footer-final">ROULOTTE NETWORK &copy; 2026</footer>
 
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
@@ -57,18 +57,17 @@
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
-                addLog("Sistema listo. Pulsa siguiente.");
                 conectarPeer();
-            } catch (err) { addLog("Error de cámara."); }
+            } catch (err) { addMsg("them", "Error: Permite la cámara."); }
         }
 
         function conectarPeer() {
-            myId = 'user-' + Math.random().toString(36).substr(2, 9);
+            myId = 'u-' + Math.random().toString(36).substr(2, 7);
             peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
             
             peer.on('connection', conn => {
                 dataConn = conn;
-                dataConn.on('data', data => addLog("Pareja: " + data));
+                dataConn.on('data', data => addMsg("them", data));
             });
 
             peer.on('call', call => {
@@ -79,7 +78,8 @@
         }
 
         async function buscar() {
-            addLog("Buscando nueva persona...");
+            document.getElementById('chat').innerHTML = "";
+            addMsg("them", "Buscando nueva pareja...");
             if(actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
             
@@ -87,35 +87,40 @@
             if (data?.[0]) {
                 const targetId = data[0].peer_id;
                 await supa.from('profiles').delete().eq('peer_id', targetId);
-                
-                // Conexión de Datos para Chat
                 dataConn = peer.connect(targetId);
-                dataConn.on('data', data => addLog("Pareja: " + data));
-                
-                // Conexión de Video
+                dataConn.on('data', data => addMsg("them", data));
                 actualCall = peer.call(targetId, myStream);
                 actualCall.on('stream', s => document.getElementById('remote').srcObject = s);
             } else {
                 await supa.from('profiles').insert([{ peer_id: myId }]);
-                addLog("Esperando a alguien...");
+                addMsg("them", "Esperando conexión...");
             }
         }
 
         function enviarMensaje() {
             const input = document.getElementById('chat-input');
-            const texto = input.value.trim();
-            if (texto && dataConn) {
-                dataConn.send(texto);
-                addLog("Tú: " + texto);
+            if (input.value.trim() && dataConn) {
+                dataConn.send(input.value);
+                addMsg("me", input.value);
                 input.value = "";
             }
         }
 
-        function addLog(txt) {
+        function addMsg(type, text) {
             const chat = document.getElementById('chat');
-            chat.innerHTML += `<div style="margin-bottom:5px;">${txt}</div>`;
+            chat.innerHTML += `<div class="msg ${type}">${text}</div>`;
             chat.scrollTop = chat.scrollHeight;
         }
+
+        function toggleEmojis() {
+            const p = document.getElementById('emoji-picker');
+            p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function addEmoji(e) {
+            document.getElementById('chat-input').value += e;
+        }
+
         window.onload = init;
     </script>
 </body>
