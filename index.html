@@ -3,83 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Network HD - Pro</title>
+    <title>Roulotte Network HD - Full Pro</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --accent: #f1c40f; --danger: #ff4444; --bg: #0a0a0a; --panel: #141414; }
+        :root { --accent: #f1c40f; --danger: #ff4444; --bg: #000; --panel: #111; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #000; color: #fff; font-family: 'Segoe UI', Roboto, sans-serif; height: 100vh; overflow: hidden; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Estructura Principal */
-        .layout { display: flex; flex-direction: column; height: 100vh; }
-        
+        /* Banners Superiores */
+        .top-ad-bar { height: 40px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #555; letter-spacing: 3px; }
+
         .header { height: 60px; background: #000; border-bottom: 2px solid #222; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; }
         .logo { color: var(--accent); font-weight: 900; font-size: 1.5rem; letter-spacing: 2px; }
-        
+
         .main-wrapper { display: flex; flex: 1; overflow: hidden; }
 
-        /* Banners de Publicidad Laterales */
-        .ad-sidebar { width: 140px; background: #050505; border: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: center; color: #333; font-size: 12px; font-weight: bold; writing-mode: vertical-rl; text-orientation: mixed; letter-spacing: 5px; }
+        /* Banners Laterales */
+        .ad-sidebar { width: 140px; background: #080808; border: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: center; color: #222; font-size: 12px; font-weight: bold; writing-mode: vertical-rl; letter-spacing: 5px; }
 
-        /* Contenedor Central */
-        .app-container { flex: 1; display: flex; background: var(--bg); position: relative; }
+        .app-container { flex: 1; display: flex; background: var(--bg); }
 
-        /* Lado de Video (Izquierda) */
-        .video-side { width: 60%; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-        .v-box { flex: 1; background: #000; border: 2px solid #333; border-radius: 15px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        /* Lado Video */
+        .video-side { width: 60%; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .v-box { flex: 1; background: #050505; border: 2px solid #333; border-radius: 12px; position: relative; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        
-        .tag { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.7); color: var(--accent); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; border: 1px solid var(--accent); z-index: 10; }
+        .tag { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; border: 1px solid var(--accent); z-index: 5; }
 
-        /* Controles sobre el video local */
-        .video-controls { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px; z-index: 10; }
-        .icon-btn { background: rgba(0,0,0,0.6); border: 1px solid #444; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
-        .icon-btn:hover { background: var(--accent); color: #000; }
-        .icon-btn.off { background: var(--danger); border-color: var(--danger); }
+        .video-controls { position: absolute; bottom: 12px; right: 12px; display: flex; gap: 8px; z-index: 5; }
+        .icon-btn { background: rgba(0,0,0,0.7); border: 1px solid #444; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .icon-btn.off { background: var(--danger); }
 
-        /* Lado de Chat e Interacción (Derecha) */
-        .interaction-side { flex: 1; display: flex; flex-direction: column; background: var(--panel); border-left: 2px solid #222; }
-        #chat-window { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
-        .msg { padding: 8px 12px; border-radius: 8px; max-width: 90%; word-wrap: break-word; }
-        .msg.sys { color: var(--accent); border-left: 2px solid var(--accent); background: rgba(241, 196, 15, 0.05); font-style: italic; }
-        .msg.me { align-self: flex-end; background: #333; color: white; }
-        .msg.them { align-self: flex-start; background: #222; color: #ccc; }
+        /* Lado Chat */
+        .chat-side { flex: 1; display: flex; flex-direction: column; background: var(--panel); border-left: 2px solid #222; }
+        #chat-window { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+        .msg { padding: 6px 12px; border-radius: 6px; max-width: 85%; }
+        .msg.sys { color: var(--accent); font-style: italic; font-size: 11px; }
+        .msg.me { align-self: flex-end; background: #333; }
+        .msg.them { align-self: flex-start; background: #222; }
 
-        /* Input de Chat */
-        .chat-input-area { padding: 15px; background: #000; border-top: 1px solid #222; display: flex; gap: 10px; }
-        #chat-input { flex: 1; background: #111; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; outline: none; }
-        #chat-input:focus { border-color: var(--accent); }
-        .btn-send { background: var(--accent); color: #000; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .chat-input-area { padding: 10px; background: #000; border-top: 1px solid #222; display: flex; gap: 8px; }
+        #chat-input { flex: 1; background: #111; border: 1px solid #333; padding: 10px; color: white; border-radius: 4px; outline: none; }
+        .btn-send { background: var(--accent); color: #000; border: none; padding: 0 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
 
-        /* Botón SIGUIENTE */
-        .next-area { padding: 0; }
-        .btn-next { width: 100%; padding: 25px; background: var(--danger); color: white; border: none; font-size: 1.5rem; font-weight: 900; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
-        .btn-next:hover { background: #ff0000; letter-spacing: 2px; }
+        .btn-next { width: 100%; padding: 20px; background: var(--danger); color: white; border: none; font-size: 1.3rem; font-weight: 900; cursor: pointer; }
 
-        @media (max-width: 900px) {
-            .ad-sidebar { display: none; }
-            .main-wrapper { flex-direction: column; }
-            .video-side { width: 100%; height: 60vh; }
-            .interaction-side { width: 100%; flex: 1; }
-        }
+        /* Pie de Página */
+        .footer { height: 35px; background: #000; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; }
+
+        @media (max-width: 900px) { .ad-sidebar, .top-ad-bar { display: none; } .main-wrapper { flex-direction: column; } .video-side { width: 100%; height: 50vh; } }
     </style>
 </head>
 <body>
 
-<div class="layout">
+    <div class="top-ad-bar">ADVERTISEMENT - PLACE YOUR BANNER HERE - PROMOTION 2026</div>
+
     <header class="header">
         <div class="logo">ROULOTTE NETWORK</div>
-        <div id="db-status" style="font-size: 10px; color: #555;">DB: CONECTANDO...</div>
+        <div id="db-status" style="font-size: 10px; color: #444;">ESTADO: INICIANDO...</div>
     </header>
 
     <div class="main-wrapper">
-        <aside class="ad-sidebar">ADVERTISING SPACE</aside>
+        <aside class="ad-sidebar">VERTICAL AD SPACE</aside>
 
         <div class="app-container">
             <section class="video-side">
                 <div class="v-box">
-                    <div class="tag">TÚ (LOCAL HD)</div>
+                    <div class="tag">TÚ (HD CAM)</div>
                     <video id="localVideo" autoplay muted playsinline></video>
                     <div class="video-controls">
                         <button class="icon-btn" onclick="toggleMic()" id="micBtn">🎤</button>
@@ -92,25 +82,22 @@
                 </div>
             </section>
 
-            <section class="interaction-side">
-                <div id="chat-window">
-                    <div class="msg sys">Bienvenido. Pulsa el botón rojo para buscar pareja.</div>
-                </div>
-                
+            <section class="chat-side">
+                <div id="chat-window"><div class="msg sys">Cargando cámara... espera la solicitud de permiso.</div></div>
                 <div class="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') sendMessage()">
-                    <button class="btn-send" onclick="sendMessage()">ENVIAR</button>
+                    <input type="text" id="chat-input" placeholder="Mensaje..." onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button class="btn-send" onclick="sendMessage()">➤</button>
                 </div>
-
-                <div class="next-area">
-                    <button class="btn-next" onclick="nextPerson()">SIGUIENTE PERSONA ➔</button>
-                </div>
+                <button class="btn-next" onclick="nextPerson()">SIGUIENTE PERSONA ➔</button>
             </section>
         </div>
 
-        <aside class="ad-sidebar">ADVERTISING SPACE</aside>
+        <aside class="ad-sidebar">VERTICAL AD SPACE</aside>
     </div>
-</div>
+
+    <footer class="footer">
+        &copy; 2026 ROULOTTE NETWORK - SEGURIDAD SSL ACTIVADA - PEER-TO-PEER ENCRYPTED
+    </footer>
 
 <script>
     const URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
@@ -120,30 +107,32 @@
     let localStream, peer, myId, currentCall, dataConn;
     let micOn = true, vidOn = true;
 
-    async function init() {
+    // Función de inicio forzada para pedir cámara de inmediato
+    async function startCamera() {
         try {
+            console.log("Solicitando cámara...");
             localStream = await navigator.mediaDevices.getUserMedia({ 
                 video: { width: 1280, height: 720 }, audio: true 
             });
             document.getElementById('localVideo').srcObject = localStream;
-            
-            myId = 'rlt-' + Math.floor(Math.random() * 999999);
-            peer = new Peer(myId, { config: {'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }]} });
+            addMsg("Cámara activada correctamente.", "sys");
+            initPeer();
+        } catch (e) {
+            console.error(e);
+            addMsg("ERROR: No se pudo acceder a la cámara. Asegúrate de estar en HTTPS.", "sys");
+        }
+    }
 
-            peer.on('open', () => { document.getElementById('db-status').innerText = "DB: ONLINE"; });
+    function initPeer() {
+        myId = 'rlt-' + Math.floor(Math.random() * 999999);
+        peer = new Peer(myId, { config: {'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }]} });
 
-            peer.on('call', call => {
-                call.answer(localStream);
-                setupRemote(call);
-            });
-
-            // Recibir chat
-            peer.on('connection', conn => {
-                dataConn = conn;
-                dataConn.on('data', data => addMsg(data, 'them'));
-            });
-
-        } catch (e) { addMsg("Error: Activa la cámara para participar.", "sys"); }
+        peer.on('open', () => { document.getElementById('db-status').innerText = "ESTADO: CONECTADO"; });
+        peer.on('call', call => { call.answer(localStream); setupRemote(call); });
+        peer.on('connection', conn => {
+            dataConn = conn;
+            dataConn.on('data', data => addMsg(data, 'them'));
+        });
     }
 
     async function nextPerson() {
@@ -159,16 +148,13 @@
             const { error } = await db.from('profiles').delete().eq('peer_id', pId);
             if (!error) {
                 const call = peer.call(pId, localStream);
-                dataConn = peer.connect(pId); // Conexión de chat
-                dataConn.on('open', () => {
-                   dataConn.on('data', d => addMsg(d, 'them'));
-                });
+                dataConn = peer.connect(pId);
+                dataConn.on('open', () => dataConn.on('data', d => addMsg(d, 'them')));
                 setupRemote(call);
             } else { nextPerson(); }
         } else {
             await db.from('profiles').insert([{ peer_id: myId }]);
             document.getElementById('status-display').innerText = "ESPERANDO...";
-            addMsg("Buscando a alguien nuevo...", "sys");
         }
     }
 
@@ -181,7 +167,6 @@
         });
     }
 
-    // Funciones de Chat
     function sendMessage() {
         const input = document.getElementById('chat-input');
         if (input.value.trim() !== "" && dataConn) {
@@ -200,7 +185,6 @@
         win.scrollTop = win.scrollHeight;
     }
 
-    // Controles de Cámara
     function toggleMic() {
         micOn = !micOn;
         localStream.getAudioTracks()[0].enabled = micOn;
@@ -213,7 +197,8 @@
         document.getElementById('vidBtn').classList.toggle('off', !vidOn);
     }
 
-    init();
+    // Arrancamos todo
+    startCamera();
 </script>
 </body>
 </html>
