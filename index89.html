@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Control Interno - Roulotte</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --accent: #f1c40f; --success: #2ecc71; --danger: #e74c3c; }
+        body { background: #050505; color: white; font-family: sans-serif; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .card { background: #111; border: 1px solid #222; padding: 15px; border-radius: 10px; }
+        video { width: 100%; border-radius: 5px; background: #000; margin-top: 10px; }
+        button { width: 100%; padding: 12px; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; margin-top: 5px; }
+        .btn-app { background: var(--success); color: #000; }
+        .btn-rej { background: var(--danger); color: white; }
+        input { padding: 10px; background: #000; border: 1px solid #333; color: white; margin-bottom: 10px; border-radius: 4px; width: 100%; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <h1>Panel de Moderación VIP (index89)</h1>
+    <div id="lista-solicitudes" class="grid">Cargando solicitudes...</div>
+
+    <hr style="margin: 40px 0; border: 0; border-top: 1px solid #333;">
+
+    <div style="max-width: 400px;">
+        <h2>Banear Usuario por Email</h2>
+        <input type="email" id="ban-email" placeholder="Email del usuario a bloquear">
+        <button class="btn-rej" onclick="ejecutarBaneo()">BLOQUEAR ACCESO</button>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN ADMIN (SERVICE ROLE KEY)
+        const SUPA_URL = "TU_URL_SUPABASE";
+        const SUPA_SERVICE = "TU_SERVICE_ROLE_KEY"; 
+        const supaAdmin = supabase.createClient(SUPA_URL, SUPA_SERVICE);
+
+        async function cargar() {
+            const { data, error } = await supaAdmin.from('verification_requests').select('*');
+            const cont = document.getElementById('lista-solicitudes');
+            cont.innerHTML = (data && data.length) ? "" : "No hay solicitudes pendientes.";
+            
+            if(data) {
+                data.forEach(r => {
+                    const videoUrl = `${SUPA_URL}/storage/v1/object/public/verifications/${r.video_url}`;
+                    cont.innerHTML += `
+                        <div class="card">
+                            <p><strong>Usuario:</strong> ${r.username}</p>
+                            <p><strong>Email:</strong> ${r.email}</p>
+                            <p><strong>Reto:</strong> ${r.numbers}</p>
+                            <video src="${videoUrl}" controls></video>
+                            <button class="btn-app" onclick="aprobar('${r.id}', '${r.email}', '${r.password}', '${r.video_url}')">APROBAR Y REGISTRAR</button>
+                            <button class="btn-rej" onclick="borrarSolicitud('${r.id}', '${r.video_url}')">RECHAZAR / BORRAR</button>
+                        </div>`;
+                });
+            }
+        }
+
+        async function aprobar(id, email, password, videoPath) {
+            // 1. Crear usuario oficial en el sistema Auth
+            const { error: authError } = await supaAdmin.auth.admin.createUser({
+                email: email,
+                password: password,
+                email_confirm: true
+            });
+
+            if (authError) return alert("Error al crear usuario: " + authError.message);
+
+            // 2. Insertar en la tabla vip_users para la sala VIP
+            await supaAdmin.from('vip_users').insert([{ email: email }]);
+
+            // 3. Limpiar solicitud y borrar video del storage
+            await borrarSolicitud(id, videoPath, false);
+
+            alert(`✅ VIP Activado: ${email}. Ya puede loguearse con su propia clave.`);
+            cargar();
+        }
+
+        async function borrarSolicitud(id, videoPath, refresh = true) {
+            await supaAdmin.from('verification_requests').delete().eq('id', id);
+            await supaAdmin.storage.from('verifications').remove([videoPath]);
+            if(refresh) cargar();
+        }
+
+        async function ejecutarBaneo() {
+            const email = document.getElementById('ban-email').value;
+            if(!email) return;
+            const { error } = await supaAdmin.from('banned_users').insert([{ email, reason: "Baneo desde panel admin" }]);
+            if (error) alert(error.message); else alert("Email bloqueado permanentemente.");
+        }
+
+        window.onload = cargar;
+    </script>
+</body>
+</html>
