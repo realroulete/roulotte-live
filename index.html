@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live VIP 2026</title>
+    <title>Roulotte Network VIP</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,7 +15,7 @@
         <div id="status-container" style="display:flex; gap:10px; align-items:center;">
             <span id="user-mode" style="color: var(--accent); font-size: 12px; font-weight: bold;">MODO: PÚBLICO</span>
             <button id="btn-vip-action" class="btn-vip-open" onclick="openModal()">HACERSE VIP 💎</button>
-            <button id="btn-logout" class="btn-vip-open" style="display:none; background:#444;" onclick="logout()">SALIR</button>
+            <button id="btn-logout" class="btn-vip-open" style="display:none; background:#444;" onclick="logout()">CERRAR SESIÓN</button>
         </div>
     </header>
 
@@ -23,7 +23,6 @@
 
     <main class="main-wrapper">
         <aside class="ad-side">ADS</aside>
-        
         <div class="content">
             <section class="video-area">
                 <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
@@ -52,7 +51,6 @@
     <div id="modal-vip" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
-            
             <div style="display:flex; gap:20px; margin-bottom:20px; border-bottom:1px solid #333;">
                 <h3 id="tab-login" onclick="switchTab('login')" style="cursor:pointer; color:var(--accent);">LOGIN</h3>
                 <h3 id="tab-reg" onclick="switchTab('reg')" style="cursor:pointer; color:#666;">REGISTRO</h3>
@@ -68,7 +66,6 @@
                 <div id="step-1">
                     <input type="text" id="reg-name" placeholder="Nombre de Usuario">
                     <input type="email" id="reg-email" placeholder="Correo">
-                    <input type="password" id="reg-pass" placeholder="Contraseña">
                     <button class="btn-send" style="width:100%" onclick="irAVerificar()">SIGUIENTE: VERIFICAR</button>
                 </div>
                 <div id="step-2" style="display:none; text-align:center;">
@@ -82,44 +79,42 @@
         </div>
     </div>
 
-    <footer class="footer-final">ROULOTTE NETWORK &copy; 2026</footer>
-
     <script>
-        // CONFIGURACIÓN SUPABASE
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        const SUPA_KEY = "TU_ANON_KEY_AQUI"; 
+        const SUPA_KEY = "TU_ANON_KEY"; 
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-        let myStream, peer, myId, actualCall, dataConn;
-        let isVIP = false;
-        let mediaRecorder, chunks = [];
+        let myStream, peer, myId, actualCall, dataConn, isVIP = false;
+        let chunks = [];
 
         async function init() {
-            try {
-                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('me').srcObject = myStream;
-                conectarPeer();
-            } catch (err) { alert("Acceso a cámara denegado."); }
+            // Comprobar si el usuario está logueado al cargar
+            const { data: { user } } = await supa.auth.getUser();
+            if (user) {
+                const { data: ban } = await supa.from('banned_users').select('*').eq('email', user.email).single();
+                if (ban) {
+                    document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:100px;'>ESTÁS BANEADO</h1>";
+                    await supa.auth.signOut();
+                    return;
+                }
+                isVIP = true;
+                actualizarInterfazVIP();
+            }
+
+            myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('me').srcObject = myStream;
+            conectarPeer();
         }
 
         function conectarPeer() {
-            // Generar ID según modo
             myId = (isVIP ? 'vip-' : 'pub-') + Math.random().toString(36).substr(2, 7);
             peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
-            
             peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
-            peer.on('call', c => { 
-                c.answer(myStream); 
-                actualCall = c; 
-                c.on('stream', s => document.getElementById('remote').srcObject = s); 
-            });
+            peer.on('call', c => { c.answer(myStream); actualCall = c; c.on('stream', s => document.getElementById('remote').srcObject = s); });
         }
 
-        // LÓGICA DE EMPAREJAMIENTO (SALA SEPARADA)
         async function buscar() {
             const tabla = isVIP ? 'vip_users' : 'profiles'; 
-            addMsg("them", `Buscando en sala ${isVIP ? 'VIP' : 'Pública'}...`);
-            
             if(actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
 
@@ -138,38 +133,17 @@
             }
         }
 
-        // --- GESTIÓN DE MODAL Y VIP ---
         function openModal() { document.getElementById('modal-vip').style.display = 'flex'; }
         function closeModal() { document.getElementById('modal-vip').style.display = 'none'; }
         
-        function switchTab(tab) {
-            const isLogin = tab === 'login';
-            document.getElementById('section-login').style.display = isLogin ? 'block' : 'none';
-            document.getElementById('section-reg').style.display = isLogin ? 'none' : 'block';
-            document.getElementById('tab-login').style.color = isLogin ? 'var(--accent)' : '#666';
-            document.getElementById('tab-reg').style.color = isLogin ? '#666' : 'var(--accent)';
-        }
-
         async function loginVIP() {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-            
-            const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
-            
-            if (error) { alert("Error: " + error.message); } 
-            else {
-                isVIP = true;
-                actualizarInterfazVIP();
-                closeModal();
-                buscar(); // Iniciar búsqueda en sala VIP
-            }
+            const { error } = await supa.auth.signInWithPassword({ email, password: pass });
+            if (error) alert("Error: " + error.message); else location.reload();
         }
 
-        function logout() {
-            supa.auth.signOut();
-            isVIP = false;
-            location.reload(); // Reiniciar para volver a modo público
-        }
+        function logout() { supa.auth.signOut().then(() => location.reload()); }
 
         function actualizarInterfazVIP() {
             document.getElementById('user-mode').innerText = "MODO: VIP 💎";
@@ -181,47 +155,44 @@
             document.getElementById('step-1').style.display = 'none';
             document.getElementById('step-2').style.display = 'block';
             document.getElementById('preview-record').srcObject = myStream;
-            document.getElementById('reto-numeros').innerText = "3 - 5 - 2"; 
+            document.getElementById('reto-numeros').innerText = Math.floor(Math.random()*5+1) + " - " + Math.floor(Math.random()*5+1) + " - " + Math.floor(Math.random()*5+1); 
         }
 
         function toggleGrabacion() {
-            chunks = [];
-            mediaRecorder = new MediaRecorder(myStream);
+            const mediaRecorder = new MediaRecorder(myStream);
             mediaRecorder.ondataavailable = e => chunks.push(e.data);
             mediaRecorder.onstop = async () => {
                 const blob = new Blob(chunks, { type: 'video/mp4' });
                 const fileName = `v_${Date.now()}.mp4`;
-                const { data, error } = await supa.storage.from('verifications').upload(fileName, blob);
-                if(!error) {
-                    await supa.from('verification_requests').insert([{
-                        username: document.getElementById('reg-name').value,
-                        email: document.getElementById('reg-email').value,
-                        video_url: fileName,
-                        numbers: "3-5-2"
-                    }]);
-                    alert("¡Video enviado! Un admin te activará el acceso VIP pronto.");
-                    closeModal();
-                }
+                await supa.storage.from('verifications').upload(fileName, blob);
+                await supa.from('verification_requests').insert([{
+                    username: document.getElementById('reg-name').value,
+                    email: document.getElementById('reg-email').value,
+                    video_url: fileName,
+                    numbers: document.getElementById('reto-numeros').innerText
+                }]);
+                alert("Solicitud enviada. Un admin te verificará.");
+                closeModal();
             };
             mediaRecorder.start();
-            document.getElementById('record-status').innerText = "GRABANDO... MOSTRAR DEDOS";
+            document.getElementById('record-status').innerText = "GRABANDO...";
             setTimeout(() => mediaRecorder.stop(), 5000);
         }
 
-        // --- CHAT Y EXTRAS ---
         function enviarMensaje() {
             const i = document.getElementById('chat-input');
-            if (i.value && dataConn) {
-                dataConn.send(i.value);
-                addMsg("me", i.value);
-                i.value = "";
-            }
+            if (i.value && dataConn) { dataConn.send(i.value); addMsg("me", i.value); i.value = ""; }
         }
 
         function addMsg(t, x) {
             const c = document.getElementById('chat');
             c.innerHTML += `<div class="msg ${t}">${x}</div>`;
             c.scrollTop = c.scrollHeight;
+        }
+
+        function switchTab(tab) {
+            document.getElementById('section-login').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('section-reg').style.display = tab === 'login' ? 'none' : 'block';
         }
 
         function toggleEmojis() { 
