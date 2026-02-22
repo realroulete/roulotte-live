@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Network HD - V7.6</title>
+    <title>Roulotte Network HD - V7.7</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -11,12 +11,12 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Cabecera Principal */
-        .header { height: 60px; background: #000; border-bottom: 1px solid #222; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; z-index: 10; }
+        /* Cabecera */
+        .header { height: 60px; background: #000; border-bottom: 1px solid #222; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; }
         .logo { color: var(--accent); font-weight: 900; font-size: 1.5rem; letter-spacing: 2px; }
-        #db-status { font-size: 10px; color: #444; text-transform: uppercase; }
+        #db-status { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Banner debajo de la cabecera */
+        /* Banner debajo de cabecera */
         .top-ad-bar { height: 45px; background: #080808; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #444; letter-spacing: 4px; font-weight: bold; }
 
         .main-wrapper { display: flex; flex: 1; overflow: hidden; }
@@ -28,34 +28,32 @@
 
         /* Lado Video */
         .video-side { width: 65%; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .v-box { flex: 1; background: #050505; border: 2px solid #222; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .v-box { flex: 1; background: #050505; border: 2px solid #222; border-radius: 12px; position: relative; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
         /* Etiquetas de estado */
-        .tag-local { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid var(--accent); z-index: 5; }
-        .tag-remote { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid var(--accent); z-index: 5; }
+        .tag-l-top { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid var(--accent); z-index: 5; display: flex; gap: 10px; }
+        .tag-r-top { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid var(--accent); z-index: 5; }
 
         .video-controls { position: absolute; bottom: 12px; right: 12px; display: flex; gap: 8px; z-index: 5; }
-        .icon-btn { background: rgba(0,0,0,0.7); border: 1px solid #444; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .icon-btn { background: rgba(0,0,0,0.7); border: 1px solid #444; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .icon-btn.off { background: var(--danger); border-color: var(--danger); }
 
-        /* Lado Chat */
+        /* Chat */
         .chat-side { flex: 1; display: flex; flex-direction: column; background: var(--panel); border-left: 2px solid #222; }
         #chat-window { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
-        .msg { padding: 8px 12px; border-radius: 6px; max-width: 85%; line-height: 1.4; }
-        .msg.sys { color: var(--accent); font-style: italic; font-size: 11px; opacity: 0.8; }
-        .msg.me { align-self: flex-end; background: #333; border-bottom-right-radius: 0; }
-        .msg.them { align-self: flex-start; background: #222; border-bottom-left-radius: 0; border: 1px solid #333; }
+        .msg { padding: 8px 12px; border-radius: 6px; max-width: 85%; }
+        .msg.sys { color: var(--accent); font-style: italic; font-size: 11px; }
+        .msg.me { align-self: flex-end; background: #333; }
+        .msg.them { align-self: flex-start; background: #222; border: 1px solid #333; }
 
         .chat-input-area { padding: 12px; background: #000; border-top: 1px solid #222; display: flex; gap: 8px; }
         #chat-input { flex: 1; background: #111; border: 1px solid #333; padding: 12px; color: white; border-radius: 6px; outline: none; }
         .btn-send { background: var(--accent); color: #000; border: none; padding: 0 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-        .btn-next { width: 100%; padding: 25px; background: var(--danger); color: white; border: none; font-size: 1.4rem; font-weight: 900; cursor: pointer; transition: 0.2s; }
-        .btn-next:active { transform: scale(0.98); }
+        .btn-next { width: 100%; padding: 25px; background: var(--danger); color: white; border: none; font-size: 1.4rem; font-weight: 900; cursor: pointer; }
 
-        /* Pie de Página */
-        .footer { height: 35px; background: #000; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; letter-spacing: 1px; }
+        .footer { height: 35px; background: #000; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; }
 
         @media (max-width: 900px) { .ad-sidebar, .top-ad-bar { display: none; } .main-wrapper { flex-direction: column; } .video-side { width: 100%; height: 50vh; } }
     </style>
@@ -75,7 +73,10 @@
         <div class="app-container">
             <section class="video-side">
                 <div class="v-box">
-                    <div class="tag-local">TÚ (CÁMARA HD)</div>
+                    <div class="tag-l-top">
+                        <span>TÚ (HD)</span>
+                        <span id="sys-local-status" style="border-left: 1px solid #444; padding-left: 10px; color: #fff;">SISTEMA: OK</span>
+                    </div>
                     <video id="localVideo" autoplay muted playsinline></video>
                     <div class="video-controls">
                         <button class="icon-btn" onclick="toggleMic()" id="micBtn">🎤</button>
@@ -83,17 +84,15 @@
                     </div>
                 </div>
                 <div class="v-box">
-                    <div class="tag-remote" id="status-display">SISTEMA: OK</div>
+                    <div class="tag-r-top" id="status-display">SISTEMA: OK</div>
                     <video id="remoteVideo" autoplay playsinline></video>
                 </div>
             </section>
 
             <section class="chat-side">
-                <div id="chat-window">
-                    <div class="msg sys">Iniciando hardware... por favor permite el acceso a la cámara.</div>
-                </div>
+                <div id="chat-window"><div class="msg sys">Bienvenido. Permite el acceso a la cámara.</div></div>
                 <div class="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="Escribe aquí..." onkeypress="if(event.key==='Enter') sendMessage()">
+                    <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') sendMessage()">
                     <button class="btn-send" onclick="sendMessage()">➤</button>
                 </div>
                 <button class="btn-next" onclick="nextPerson()">SIGUIENTE PERSONA ➔</button>
@@ -103,12 +102,9 @@
         <aside class="ad-sidebar">AD SPACE</aside>
     </div>
 
-    <footer class="footer">
-        ROULOTTE NETWORK &copy; 2026 • CONEXIÓN P2P SEGURA • CALIDAD HD 720P
-    </footer>
+    <footer class="footer">ROULOTTE NETWORK &copy; 2026 • CONEXIÓN P2P SEGURA</footer>
 
 <script>
-    // CONFIGURACIÓN SUPABASE
     const URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
     const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
     const db = supabase.createClient(URL, KEY, { auth: { persistSession: false } });
@@ -118,33 +114,20 @@
 
     async function startApp() {
         try {
-            localStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { width: 1280, height: 720 }, audio: true 
-            });
+            localStream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: true });
             document.getElementById('localVideo').srcObject = localStream;
-            addMsg("Cámara lista en HD.", "sys");
-            initNetworking();
-        } catch (e) {
-            addMsg("ERROR: Debes habilitar la cámara y usar HTTPS.", "sys");
-        }
+            initPeer();
+        } catch (e) { addMsg("Error: Habilita la cámara.", "sys"); }
     }
 
-    function initNetworking() {
+    function initPeer() {
         myId = 'rlt-' + Math.floor(Math.random() * 999999);
-        peer = new Peer(myId, { 
-            config: {'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }]} 
-        });
-
+        peer = new Peer(myId, { config: {'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }]} });
         peer.on('open', () => { 
             document.getElementById('db-status').innerText = "ESTADO: ONLINE"; 
             document.getElementById('db-status').style.color = "#2ecc71";
         });
-
-        peer.on('call', call => { 
-            call.answer(localStream); 
-            setupRemote(call); 
-        });
-
+        peer.on('call', call => { call.answer(localStream); setupRemote(call); });
         peer.on('connection', conn => {
             dataConn = conn;
             dataConn.on('data', data => addMsg(data, 'them'));
@@ -155,10 +138,8 @@
         document.getElementById('status-display').innerText = "BUSCANDO...";
         if (currentCall) currentCall.close();
         document.getElementById('remoteVideo').srcObject = null;
-
         await db.from('profiles').delete().eq('peer_id', myId);
         const { data } = await db.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
-
         if (data && data.length > 0) {
             const pId = data[0].peer_id;
             const { error } = await db.from('profiles').delete().eq('peer_id', pId);
@@ -203,14 +184,12 @@
     function toggleMic() {
         micOn = !micOn;
         localStream.getAudioTracks()[0].enabled = micOn;
-        document.getElementById('micBtn').classList.toggle('off', !micOn);
         document.getElementById('micBtn').innerText = micOn ? "🎤" : "🔇";
     }
 
     function toggleVid() {
         vidOn = !vidOn;
         localStream.getVideoTracks()[0].enabled = vidOn;
-        document.getElementById('vidBtn').classList.toggle('off', !vidOn);
         document.getElementById('vidBtn').innerText = vidOn ? "📷" : "🚫";
     }
 
