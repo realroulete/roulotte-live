@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roulotte Network</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,127 +11,83 @@
 <body>
 
     <header class="header"><div class="logo">Roulotte Live</div></header>
-    <div class="ad-top">ESPACIO PUBLICITARIO SUPERIOR</div>
 
-    <main class="main-layout">
-        <aside class="ad-side">ADS</aside>
+    <div class="main-wrapper">
+        <aside class="ad-side">PUBLICIDAD LATERAL</aside>
         
-        <div class="app-container">
-            <section class="video-col">
-                <div class="video-box">
-                    <div class="label">TÚ</div>
-                    <video id="localVideo" autoplay muted playsinline></video>
-                </div>
-                <div class="video-box">
-                    <div id="status-tag" class="label">SISTEMA: OK</div>
-                    <video id="remoteVideo" autoplay playsinline></video>
-                </div>
+        <div class="content">
+            <section class="video-area">
+                <div class="video-box"><video id="me" autoplay muted playsinline></video></div>
+                <div class="video-box"><video id="remote" autoplay playsinline></video></div>
             </section>
 
-            <section class="chat-col">
-                <div id="chat-window">
-                    <div id="init-msg" class="msg sys">Iniciando en modo Producción...</div>
-                </div>
-                <button class="btn-next" onclick="next()">SIGUIENTE PERSONA ➔</button>
+            <section class="chat-area">
+                <div id="chat">Esperando cámara...</div>
+                <button class="btn-next" onclick="buscar()">SIGUIENTE PERSONA</button>
             </section>
         </div>
 
-        <aside class="ad-side">ADS</aside>
-    </main>
+        <aside class="ad-side">PUBLICIDAD LATERAL</aside>
+    </div>
 
-    <div class="ad-bottom">ESPACIO PUBLICITARIO INFERIOR</div>
+    <div class="ad-bottom">BANNER PUBLICITARIO INFERIOR 728x90</div>
 
     <script>
-        // CONFIGURACIÓN LIVE
-        const URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        // Asegúrate de que esta Key sea la actual de tu panel de Supabase
-        const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
-        
-        const db = supabase.createClient(URL, KEY, { auth: { persistSession: false } });
+        const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
+        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
+        const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-        let localStream, peer, myId, currentCall;
+        let myStream, peer, myId, actualCall;
 
-        async function start() {
+        async function init() {
             try {
-                // Pedimos cámara
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                const lv = document.getElementById('localVideo');
-                lv.srcObject = localStream;
+                // Forzamos la cámara antes de cualquier otra cosa
+                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('me').srcObject = myStream;
+                document.getElementById('chat').innerHTML = "Cámara OK. Conectando...";
                 
-                lv.onloadedmetadata = () => {
-                    lv.play();
-                    document.getElementById('init-msg').innerText = "Cámara OK. Conectando a servidor Live...";
-                    initNetworking();
-                };
-            } catch (e) {
-                document.getElementById('init-msg').innerText = "ERROR de hardware. Revisa permisos.";
+                conectarPeer();
+            } catch (err) {
+                document.getElementById('chat').innerHTML = "ERROR: Activa la cámara en el candado de la URL.";
             }
         }
 
-        function initNetworking() {
-            myId = 'rlt-' + Math.floor(Math.random() * 99999);
-            
-            // Configuración forzada para servidores en la nube (Live)
-            peer = new Peer(myId, {
-                debug: 2,
-                secure: true,
-                port: 443,
-                host: '0.peerjs.com'
-            });
+        function conectarPeer() {
+            myId = 'user-' + Math.random().toString(36).substr(2, 9);
+            // Configuración segura para GitHub Pages
+            peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
 
-            peer.on('open', (id) => {
-                console.log('Mi ID de Peer es: ' + id);
-                document.getElementById('init-msg').innerText = "Conectado. Pulsa SIGUIENTE.";
+            peer.on('open', () => {
+                document.getElementById('chat').innerHTML = "Listo para buscar.";
             });
 
             peer.on('call', call => {
-                call.answer(localStream);
-                handleCall(call);
-            });
-
-            peer.on('error', (err) => {
-                console.error('Error en Peer:', err);
-                document.getElementById('init-msg').innerText = "Error de conexión: " + err.type;
+                call.answer(myStream);
+                call.on('stream', s => document.getElementById('remote').srcObject = s);
+                actualCall = call;
             });
         }
 
-        async function next() {
-            document.getElementById('status-tag').innerText = "BUSCANDO...";
-            if (currentCall) currentCall.close();
-            
-            // 1. Borrar rastro antiguo
-            await db.from('profiles').delete().eq('peer_id', myId);
-            
-            // 2. Intentar emparejar
-            const { data, error } = await db.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
-            
+        async function buscar() {
+            document.getElementById('chat').innerHTML = "Buscando...";
+            if(actualCall) actualCall.close();
+
+            // Lógica rápida de Supabase
+            const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
+
             if (data && data.length > 0) {
-                const pId = data[0].peer_id;
-                await db.from('profiles').delete().eq('peer_id', pId);
-                const call = peer.call(pId, localStream);
-                handleCall(call);
+                const targetId = data[0].peer_id;
+                await supa.from('profiles').delete().eq('peer_id', targetId);
+                const call = peer.call(targetId, myStream);
+                call.on('stream', s => document.getElementById('remote').srcObject = s);
+                actualCall = call;
             } else {
-                // 3. Si no hay nadie, anotarse en la lista
-                const { error: insErr } = await db.from('profiles').insert([{ peer_id: myId }]);
-                if (insErr) {
-                    document.getElementById('init-msg').innerText = "Error Supabase: " + insErr.message;
-                } else {
-                    document.getElementById('status-tag').innerText = "ESPERANDO...";
-                }
+                await supa.from('profiles').insert([{ peer_id: myId }]);
+                document.getElementById('chat').innerHTML = "Esperando a alguien...";
             }
         }
 
-        function handleCall(call) {
-            currentCall = call;
-            call.on('stream', s => {
-                const rv = document.getElementById('remoteVideo');
-                rv.srcObject = s;
-                rv.onloadedmetadata = () => rv.play();
-                document.getElementById('status-tag').innerText = "EN VIVO ✅";
-            });
-        }
-
-        window.onload = start;
+        window.onload = init;
     </script>
 </body>
 </html>
