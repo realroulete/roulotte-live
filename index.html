@@ -7,37 +7,37 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --accent: #f1c40f; --danger: #ff4444; --bg: #000; --panel: #080808; }
+        :root { --accent: #f1c40f; --danger: #ff4444; --bg: #000; --panel: #0a0a0a; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Cabecera y Banner Superior */
+        /* Cabecera */
         .header { height: 50px; background: #000; border-bottom: 1px solid #222; display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
         .logo { color: var(--accent); font-weight: 900; font-size: 1.3rem; letter-spacing: 2px; }
-        .top-ad-bar { height: 40px; background: #080808; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; flex-shrink: 0; letter-spacing: 3px; }
+
+        /* Banner Superior */
+        .top-ad-bar { height: 40px; background: #080808; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555; flex-shrink: 0; letter-spacing: 3px; font-weight: bold; }
 
         .main-wrapper { display: flex; flex: 1; overflow: hidden; }
 
-        /* Banners Laterales (Izquierdo y Derecho) */
-        .ad-sidebar { width: 100px; background: #000; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 10px; writing-mode: vertical-rl; flex-shrink: 0; font-weight: bold; border-left: 1px solid #111; border-right: 1px solid #111; }
+        /* Banners Laterales */
+        .ad-sidebar { width: 100px; background: #000; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 10px; writing-mode: vertical-rl; flex-shrink: 0; border-left: 1px solid #111; border-right: 1px solid #111; font-weight: bold; }
 
         .app-container { flex: 1; display: flex; overflow: hidden; background: #000; }
 
-        /* Lado Izquierdo: Videos Apilados (50% de alto cada uno) */
+        /* Videos Izquierda (50/50) */
         .video-column { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #222; }
         .v-box { flex: 1; position: relative; overflow: hidden; border-bottom: 1px solid #222; background: #050505; }
         video { width: 100%; height: 100%; object-fit: cover; background: #000; }
 
-        /* Etiquetas de los videos */
         .tag-l { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: bold; border: 1px solid var(--accent); z-index: 5; }
         .tag-r-left { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: bold; border: 1px solid var(--accent); z-index: 5; }
         .tag-r-right { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.8); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: bold; border: 1px solid #444; z-index: 5; }
 
-        /* Controles de cámara */
         .video-controls { position: absolute; bottom: 12px; right: 12px; display: flex; gap: 8px; z-index: 5; }
         .icon-btn { background: rgba(0,0,0,0.7); border: 1px solid #444; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        /* Lado Derecho: Chat (100% de alto) */
+        /* Chat Derecha (100%) */
         .chat-column { flex: 1; display: flex; flex-direction: column; background: var(--panel); }
         #chat-window { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
         .msg { padding: 8px; border-radius: 6px; max-width: 85%; }
@@ -49,28 +49,29 @@
         #chat-input { flex: 1; background: #050505; border: 1px solid #333; padding: 12px; color: white; border-radius: 6px; outline: none; }
         .btn-send { background: var(--accent); color: #000; border: none; padding: 0 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-        /* Botón Siguiente */
         .btn-next { width: 100%; padding: 22px; background: var(--danger); color: white; border: none; font-size: 1.3rem; font-weight: 900; cursor: pointer; text-transform: uppercase; }
 
-        /* Pie de página */
-        .footer { height: 30px; background: #000; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #444; flex-shrink: 0; }
+        /* Banner Inferior (NUEVO) */
+        .bottom-ad-bar { height: 40px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555; flex-shrink: 0; letter-spacing: 3px; font-weight: bold; }
 
-        /* Ajuste para móviles */
-        @media (max-width: 800px) { .ad-sidebar { display: none; } .video-column { width: 100%; height: 50%; } .app-container { flex-direction: column; } .chat-column { height: 50%; } }
+        /* Pie de página */
+        .footer { height: 30px; background: #000; border-top: 1px solid #111; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #333; flex-shrink: 0; }
+
+        @media (max-width: 800px) { .ad-sidebar { display: none; } .video-column { width: 100%; height: 50%; border-right: none; } .app-container { flex-direction: column; } }
     </style>
 </head>
 <body>
 
     <header class="header"><div class="logo">ROULOTTE LIVE</div></header>
-    <div class="top-ad-bar">PUBLICIDAD • CONEXIÓN PREMIUM HD • ROULOTTE 2026</div>
+    <div class="top-ad-bar">PUBLICIDAD SUPERIOR • ESPACIO DISPONIBLE • 2026</div>
 
     <div class="main-wrapper">
-        <aside class="ad-sidebar">ANUNCIO IZQUIERDO</aside>
+        <aside class="ad-sidebar">BANNER IZQUIERDO</aside>
         
         <div class="app-container">
             <section class="video-column">
                 <div class="v-box">
-                    <div class="tag-l">TÚ (LOCAL)</div>
+                    <div class="tag-l">TÚ (VIDEO LOCAL)</div>
                     <video id="localVideo" autoplay muted playsinline></video>
                     <div class="video-controls">
                         <button class="icon-btn" onclick="toggleMic()" id="micBtn">🎤</button>
@@ -85,7 +86,7 @@
             </section>
 
             <section class="chat-column">
-                <div id="chat-window"><div class="msg sys">Iniciando... acepta los permisos de cámara en tu navegador.</div></div>
+                <div id="chat-window"><div class="msg sys">Iniciando hardware... permite el acceso a la cámara.</div></div>
                 <div class="chat-input-area">
                     <input type="text" id="chat-input" placeholder="Chat..." onkeypress="if(event.key==='Enter') sendMessage()">
                     <button class="btn-send" onclick="sendMessage()">➤</button>
@@ -94,9 +95,10 @@
             </section>
         </div>
 
-        <aside class="ad-sidebar">ANUNCIO DERECHO</aside>
+        <aside class="ad-sidebar">BANNER DERECHO</aside>
     </div>
 
+    <div class="bottom-ad-bar">PUBLICIDAD INFERIOR • PROMOCIÓN ROULOTTE LIVE</div>
     <footer class="footer">ROULOTTE LIVE &copy; 2026 • TODOS LOS DERECHOS RESERVADOS</footer>
 
 <script>
@@ -107,18 +109,29 @@
     let localStream, peer, myId, currentCall, dataConn;
     let micOn = true, vidOn = true;
 
-    // Disparador de cámara inmediato
-    async function start() {
+    // BLOQUE DE CÁMARA ULTRA-SEGURO
+    async function startCamera() {
         try {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('localVideo').srcObject = localStream;
-            initRed();
-        } catch (e) {
-            addMsg("Error: Activa la cámara en el candado de la URL.", "sys");
+            console.log("Solicitando cámara...");
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "user" }, 
+                audio: true 
+            });
+            localStream = stream;
+            document.getElementById('localVideo').srcObject = stream;
+            addMsg("Cámara activada.", "sys");
+            initNet();
+        } catch (err) {
+            console.error("Error de cámara:", err);
+            addMsg("ERROR: No se detecta cámara o permiso denegado.", "sys");
+            // Reintento manual si el usuario bloqueó por error
+            if(err.name === "NotAllowedError") {
+                alert("Has bloqueado la cámara. Haz clic en el candado de la URL y cámbialo a 'Permitir'.");
+            }
         }
     }
 
-    function initRed() {
+    function initNet() {
         myId = 'rlt-' + Math.floor(Math.random() * 99999);
         peer = new Peer(myId);
         peer.on('open', () => {
@@ -179,7 +192,8 @@
     function toggleMic() { micOn = !micOn; localStream.getAudioTracks()[0].enabled = micOn; document.getElementById('micBtn').innerText = micOn ? "🎤" : "🔇"; }
     function toggleVid() { vidOn = !vidOn; localStream.getVideoTracks()[0].enabled = vidOn; document.getElementById('vidBtn').innerText = vidOn ? "📷" : "🚫"; }
 
-    start();
+    // Ejecución inmediata
+    startCamera();
 </script>
 </body>
 </html>
