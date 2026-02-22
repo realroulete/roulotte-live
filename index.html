@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <link rel="icon" href="data:,"> <title>Roulotte Network Live</title>
+    <link rel="icon" href="data:image/x-icon;base64,AA"> <title>Roulotte Network Live</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -76,56 +76,65 @@
 
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE"; // PON TU ANON KEY AQUÍ
-        const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE"; 
+        
+        // Configuración para evitar el error 406
+        const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {
+            global: { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
+        });
 
         let myStream, peer, myId, actualCall, dataConn, isVIP = false;
         let myIP = "";
 
         async function init() {
             try {
-                // Obtener IP
-                const res = await fetch('https://api.ipify.org?format=json');
-                const ipData = await res.json();
-                myIP = ipData.ip;
-
-                // Verificar baneo con manejo de error 406
-                const { data: ban, error } = await supa.from('banned_users').select('ip_address').eq('ip_address', myIP).maybeSingle();
+                // Obtener IP con timeout para que no bloquee el inicio en 4G
+                const controller = new AbortController();
+                setTimeout(() => controller.abort(), 3000);
+                const res = await fetch('https://api.ipify.org?format=json', { signal: controller.signal }).catch(() => null);
                 
-                if (ban) {
-                    document.body.innerHTML = "<h1 style='color:red; text-align:center; padding-top:100px; font-family:sans-serif;'>ACCESO DENEGADO</h1>";
-                    return;
+                if (res) {
+                    const ipData = await res.json();
+                    myIP = ipData.ip;
+                    // Consulta segura para evitar 406
+                    const { data: ban } = await supa.from('banned_users').select('ip_address').eq('ip_address', myIP).maybeSingle();
+                    if (ban) {
+                        document.body.innerHTML = "<h1 style='color:red; text-align:center; padding-top:100px;'>ACCESO DENEGADO</h1>";
+                        return;
+                    }
                 }
 
-                // Verificar Auth
                 const { data: { user } } = await supa.auth.getUser();
-                if (user) {
-                    isVIP = true;
-                    actualizarInterfazVIP();
-                }
+                if (user) { isVIP = true; actualizarInterfazVIP(); }
 
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
                 conectarPeer();
             } catch (e) {
-                console.error("Init Error:", e);
-                alert("Asegúrate de dar permisos de cámara y tener internet.");
+                console.warn("Error en init (posiblemente IP/Baneo), continuando chat...", e);
+                // Si falla la IP, intentamos cargar el chat de todos modos
+                if (!myStream) {
+                    myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => null);
+                    if(myStream) { document.getElementById('me').srcObject = myStream; conectarPeer(); }
+                }
             }
         }
 
         function conectarPeer() {
             myId = (isVIP ? 'vip-' : 'pub-') + Math.random().toString(36).substr(2, 7);
             
-            // CONFIGURACIÓN PARA 4G (STUN SERVERS)
+            // Configuración ICE avanzada para conexiones móviles (4G/5G)
             peer = new Peer(myId, {
                 config: {
                     'iceServers': [
-                        { url: 'stun:stun.l.google.com:19302' },
-                        { url: 'stun:stun1.l.google.com:19302' },
-                        { url: 'stun:stun2.l.google.com:19302' }
-                    ]
-                },
-                debug: 1
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun3.l.google.com:19302' },
+                        { urls: 'stun:stun4.l.google.com:19302' }
+                    ],
+                    'iceCandidatePoolSize': 10
+                }
             });
 
             peer.on('connection', c => { 
@@ -141,6 +150,8 @@
                 actualCall = c; 
                 c.on('stream', s => document.getElementById('remote').srcObject = s); 
             });
+
+            peer.on('error', err => console.error("PeerJS Error:", err.type));
         }
 
         async function buscar() {
@@ -149,11 +160,15 @@
             if(actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
 
+            // Limpieza y búsqueda
             const { data } = await supa.from(tabla).select('peer_id').neq('peer_id', myId).limit(1);
 
             if (data && data[0]) {
                 const targetId = data[0].peer_id;
-                await supa.from(tabla).delete().eq('peer_id', targetId);
+                const { error: delError } = await supa.from(tabla).delete().eq('peer_id', targetId);
+                
+                if (delError) { setTimeout(buscar, 500); return; }
+
                 dataConn = peer.connect(targetId);
                 dataConn.on('data', d => {
                     if(d.type === 'report') procesarReporteRecibido();
@@ -166,20 +181,20 @@
             }
         }
 
+        // --- FUNCIONES RESTANTES (REPORTE, LOGIN, MODAL) ---
         async function reportarUsuario() {
             if(!dataConn) return;
-            if(confirm("¿Reportar a este usuario?")) {
+            if(confirm("¿Reportar usuario?")) {
                 dataConn.send({ type: 'report' });
-                alert("Reportado. Al recibir 3 serás bloqueado.");
-                buscar();
+                alert("Reportado."); buscar();
             }
         }
 
         async function procesarReporteRecibido() {
             let r = parseInt(localStorage.getItem('reports_received') || 0) + 1;
             localStorage.setItem('reports_received', r);
-            if(r >= 3) {
-                await supa.from('banned_users').insert([{ ip_address: myIP, reason: "3 reportes" }]);
+            if(r >= 3 && myIP) {
+                await supa.from('banned_users').insert([{ ip_address: myIP, reason: "Automático: 3 reportes" }]);
                 location.reload();
             }
         }
@@ -188,17 +203,15 @@
             const e = document.getElementById('login-email').value;
             const p = document.getElementById('login-pass').value;
             const { error } = await supa.auth.signInWithPassword({ email: e, password: p });
-            if (error) alert(error.message); else location.reload();
+            if (error) alert("Credenciales incorrectas"); else location.reload();
         }
 
         function logout() { supa.auth.signOut().then(() => location.reload()); }
-        
         function actualizarInterfazVIP() {
             document.getElementById('user-mode').innerText = "MODO: VIP 💎";
             document.getElementById('btn-vip-action').style.display = 'none';
             document.getElementById('btn-logout').style.display = 'block';
         }
-
         function irAVerificar() {
             if(!document.getElementById('reg-pass').value) return alert("Escribe una contraseña");
             document.getElementById('step-1').style.display = 'none';
@@ -206,7 +219,6 @@
             document.getElementById('preview-record').srcObject = myStream;
             document.getElementById('reto-numeros').innerText = Math.floor(Math.random()*5+1) + " - " + Math.floor(Math.random()*5+1); 
         }
-
         function toggleGrabacion() {
             let chunks = [];
             const recorder = new MediaRecorder(myStream);
@@ -222,31 +234,27 @@
                     video_url: name,
                     numbers: document.getElementById('reto-numeros').innerText
                 }]);
-                alert("Solicitud enviada."); closeModal();
+                alert("Enviado para revisión."); closeModal();
             };
             recorder.start();
             document.getElementById('record-status').innerText = "GRABANDO...";
             setTimeout(() => recorder.stop(), 5000);
         }
-
         function enviarMensaje() {
             const i = document.getElementById('chat-input');
             if (i.value && dataConn) { dataConn.send(i.value); addMsg("me", i.value); i.value = ""; }
         }
-
         function addMsg(t, x) {
             const c = document.getElementById('chat');
             c.innerHTML += `<div class="msg ${t}">${x}</div>`;
             c.scrollTop = c.scrollHeight;
         }
-
         function openModal() { document.getElementById('modal-vip').style.display = 'flex'; }
         function closeModal() { document.getElementById('modal-vip').style.display = 'none'; }
         function switchTab(t) {
             document.getElementById('section-login').style.display = t === 'login' ? 'block' : 'none';
             document.getElementById('section-reg').style.display = t === 'login' ? 'none' : 'block';
         }
-
         window.onload = init;
     </script>
 </body>
