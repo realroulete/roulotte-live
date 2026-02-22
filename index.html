@@ -1,74 +1,38 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live VIP</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-    <header class="header">
-        <div class="logo">Roulotte Live</div>
-        <div id="user-status" style="font-size: 12px; color: var(--accent);">Modo: Público</div>
-    </header>
-
-    <main class="main-wrapper">
-        <div class="content">
-            <section class="video-area">
-                <div class="video-box"><video id="me" autoplay muted playsinline></video></div>
-                <div class="video-box"><video id="remote" autoplay playsinline></video></div>
-            </section>
-
-            <section class="chat-area">
-                <div id="chat"></div>
-                <div class="chat-controls">
-                    <div id="emoji-picker">
-                        <span onclick="addEmoji('😀')">😀</span><span onclick="addEmoji('🔥')">🔥</span>
-                        <span onclick="addEmoji('👋')">👋</span><span onclick="addEmoji('💎')">💎</span>
-                    </div>
-                    <div class="input-container">
-                        <input type="text" id="chat-input" placeholder="Mensaje...">
-                        <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
-                    </div>
-                </div>
-                <button class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
-            </section>
-        </div>
-    </main>
-
-    <script>
-        const supa = supabase.createClient("TU_URL", "TU_KEY");
-        let myStream, peer, myId, actualCall, dataConn;
-        let isVIP = false; // Esto cambiará al loguearse
-
-        async function init() {
-            myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('me').srcObject = myStream;
-            conectarPeer();
-        }
-
-        function conectarPeer() {
-            myId = (isVIP ? 'vip-' : 'pub-') + Math.random().toString(36).substr(2, 7);
-            peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
-            // ... (Lógica de peer.on similar a la anterior)
-        }
-
-        async function buscar() {
-            const tabla = isVIP ? 'vip_users' : 'profiles'; 
-            // Buscamos solo en nuestra "sala" (VIP con VIP, Público con Público)
-            const { data } = await supa.from(tabla).select('peer_id').neq('peer_id', myId).limit(1);
+<div id="modal-vip" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>REGISTRO VIP 💎</h2>
+        <p>Acceso a salas exclusivas y verificación de identidad.</p>
+        
+        <form id="vip-form">
+            <input type="text" id="reg-name" placeholder="Nombre de usuario" required>
+            <input type="email" id="reg-email" placeholder="Email" required>
+            <input type="password" id="reg-pass" placeholder="Contraseña" required>
             
-            if (data?.[0]) {
-                const targetId = data[0].peer_id;
-                await supa.from(tabla).delete().eq('peer_id', targetId);
-                // Llamada...
-            } else {
-                await supa.from(tabla).insert([{ peer_id: myId }]);
-            }
-        }
-        window.onload = init;
-    </script>
-</body>
-</html>
+            <div class="verificacion-box">
+                <p><strong>RETO DE SEGURIDAD:</strong></p>
+                <p>Graba un video corto mostrando estos números con tus dedos:</p>
+                <div id="reto-numeros" class="numeros-random">Cargando...</div>
+                <input type="file" id="reg-video" accept="video/*" capture="user" required>
+            </div>
+            
+            <button type="submit" class="btn-verify-submit">ENVIAR SOLICITUD</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Generar números aleatorios para el reto (o traer de tu tabla)
+    function generarReto() {
+        const n1 = Math.floor(Math.random() * 5) + 1;
+        const n2 = Math.floor(Math.random() * 5) + 1;
+        const n3 = Math.floor(Math.random() * 5) + 1;
+        document.getElementById('reto-numeros').innerText = `${n1} - ${n2} - ${n3}`;
+    }
+
+    function openModal() { 
+        document.getElementById('modal-vip').style.display = 'flex'; 
+        generarReto();
+    }
+    function closeModal() { document.getElementById('modal-vip').style.display = 'none'; }
+</script>
