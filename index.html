@@ -7,85 +7,104 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --accent: #f1c40f; --danger: #ff4444; --bg: #000; --panel: #0a0a0a; }
+        :root { --accent: #f1c40f; --danger: #ff4444; --bg: #000; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* FIX DE SCROLL: Permitimos scroll vertical pero ocultamos el horizontal */
+        body { 
+            background: var(--bg); 
+            color: #fff; 
+            font-family: 'Segoe UI', sans-serif; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden; 
+        }
 
         .header { height: 50px; background: #000; border-bottom: 1px solid #222; display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
         .logo { color: var(--accent); font-weight: 900; font-size: 1.3rem; letter-spacing: 2px; }
 
-        .top-ad-bar { height: 40px; background: #080808; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555; flex-shrink: 0; letter-spacing: 3px; font-weight: bold; }
+        .top-ad-bar { height: 40px; background: #080808; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555; flex-shrink: 0; text-align: center; }
 
-        .main-wrapper { display: flex; flex: 1; overflow: hidden; }
-        .ad-sidebar { width: 100px; background: #000; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 10px; writing-mode: vertical-rl; flex-shrink: 0; border-left: 1px solid #111; border-right: 1px solid #111; font-weight: bold; }
+        .main-wrapper { display: flex; flex: 1; position: relative; }
 
-        .app-container { flex: 1; display: flex; overflow: hidden; background: #000; }
+        /* Banners laterales (se ocultan en móvil para dar espacio) */
+        .ad-sidebar { width: 80px; background: #000; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 10px; writing-mode: vertical-rl; flex-shrink: 0; border-left: 1px solid #111; border-right: 1px solid #111; }
 
-        .video-column { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #222; }
-        .v-box { flex: 1; position: relative; overflow: hidden; border-bottom: 1px solid #222; background: #050505; display: flex; align-items: center; justify-content: center; }
-        
-        /* IMPORTANTE: El video debe tener fondo negro y tamaño completo */
-        video { width: 100%; height: 100%; object-fit: cover; background: #000; display: block; }
+        .app-container { flex: 1; display: flex; background: #000; }
 
-        .tag-l { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: bold; border: 1px solid var(--accent); z-index: 5; }
-        .tag-r-left { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: bold; border: 1px solid var(--accent); z-index: 5; }
-        .tag-r-right { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.8); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: bold; border: 1px solid #444; z-index: 5; }
+        /* Videos Izquierda */
+        .video-column { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #222; height: calc(100vh - 160px); }
+        .v-box { flex: 1; position: relative; overflow: hidden; border-bottom: 1px solid #222; background: #050505; }
+        video { width: 100%; height: 100%; object-fit: cover; background: #000; }
 
-        .chat-column { flex: 1; display: flex; flex-direction: column; background: var(--panel); }
-        #chat-window { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
-        .msg { padding: 8px; border-radius: 6px; max-width: 85%; }
-        .msg.sys { color: var(--accent); font-style: italic; font-size: 10px; border-left: 2px solid var(--accent); padding-left: 8px; }
-        .msg.me { align-self: flex-end; background: #222; }
-        .msg.them { align-self: flex-start; background: #111; border: 1px solid #222; }
+        .tag-l { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; z-index: 5; border: 1px solid var(--accent); }
 
-        .chat-input-area { padding: 12px; background: #000; border-top: 1px solid #222; display: flex; gap: 8px; }
-        #chat-input { flex: 1; background: #050505; border: 1px solid #333; padding: 12px; color: white; border-radius: 6px; outline: none; }
-        .btn-send { background: var(--accent); color: #000; border: none; padding: 0 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        /* Chat Derecha */
+        .chat-column { flex: 1; display: flex; flex-direction: column; background: #0a0a0a; height: calc(100vh - 160px); }
+        #chat-window { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .msg { padding: 10px; border-radius: 8px; max-width: 90%; font-size: 13px; }
+        .msg.sys { color: var(--accent); background: rgba(241, 196, 15, 0.1); align-self: center; text-align: center; font-size: 11px; width: 100%; }
+        .msg.me { align-self: flex-end; background: #333; }
+        .msg.them { align-self: flex-start; background: #1a1a1a; border: 1px solid #222; }
 
-        .btn-next { width: 100%; padding: 22px; background: var(--danger); color: white; border: none; font-size: 1.3rem; font-weight: 900; cursor: pointer; text-transform: uppercase; }
+        .chat-input-area { padding: 10px; background: #000; border-top: 1px solid #222; display: flex; gap: 8px; }
+        #chat-input { flex: 1; background: #111; border: 1px solid #333; padding: 12px; color: white; border-radius: 6px; outline: none; }
+        .btn-send { background: var(--accent); color: #000; border: none; padding: 0 15px; border-radius: 6px; font-weight: bold; }
+
+        .btn-next { width: 100%; padding: 20px; background: var(--danger); color: white; border: none; font-size: 1.2rem; font-weight: 900; cursor: pointer; }
 
         /* Banner Inferior y Footer */
-        .bottom-ad-bar { height: 40px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555; flex-shrink: 0; letter-spacing: 3px; font-weight: bold; }
-        .footer { height: 30px; background: #000; border-top: 1px solid #111; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #333; flex-shrink: 0; }
+        .bottom-ad-bar { height: 40px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555; font-weight: bold; }
+        .footer { height: 30px; background: #000; border-top: 1px solid #111; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #333; }
 
-        @media (max-width: 800px) { .ad-sidebar { display: none; } .video-column { width: 100%; height: 50%; } .app-container { flex-direction: column; } }
+        /* RESPONSIVE MÓVIL */
+        @media (max-width: 768px) {
+            .ad-sidebar { display: none; }
+            .app-container { flex-direction: column; overflow-y: auto; height: auto; }
+            .video-column { width: 100%; height: 60vh; border-right: none; }
+            .chat-column { width: 100%; height: 50vh; }
+            body { overflow-y: auto; }
+        }
     </style>
 </head>
 <body>
 
     <header class="header"><div class="logo">ROULOTTE LIVE</div></header>
-    <div class="top-ad-bar">PUBLICIDAD SUPERIOR • ESPACIO DISPONIBLE • 2026</div>
+    <div class="top-ad-bar">PUBLICIDAD SUPERIOR • ESPACIO DISPONIBLE</div>
 
     <div class="main-wrapper">
-        <aside class="ad-sidebar">BANNER IZQUIERDO</aside>
+        <aside class="ad-sidebar">ADS</aside>
         
         <div class="app-container">
             <section class="video-column">
                 <div class="v-box">
-                    <div class="tag-l">TU VIDEO (LIVE)</div>
+                    <div class="tag-l">TÚ (LIVE)</div>
                     <video id="localVideo" autoplay muted playsinline></video>
                 </div>
                 <div class="v-box">
-                    <div class="tag-r-left" id="status-display">SISTEMA: OK</div>
-                    <div class="tag-r-right" id="db-status">CONEXIÓN: OFF</div>
+                    <div class="tag-l" id="status-display">SISTEMA: OK</div>
                     <video id="remoteVideo" autoplay playsinline></video>
                 </div>
             </section>
 
             <section class="chat-column">
-                <div id="chat-window"><div class="msg sys">Bienvenido. Si el navegador no pide cámara, refresca la página.</div></div>
+                <div id="chat-window">
+                    <div class="msg sys">TOCA AQUÍ SI LA CÁMARA NO INICIA</div>
+                    <button id="force-cam" onclick="initCamera()" style="background:var(--accent); color:black; padding:10px; border:none; border-radius:5px; margin:10px; font-weight:bold;">ACTIVAR MI CÁMARA</button>
+                </div>
                 <div class="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="Chat..." onkeypress="if(event.key==='Enter') sendMessage()">
+                    <input type="text" id="chat-input" placeholder="Mensaje..." onkeypress="if(event.key==='Enter') sendMessage()">
                     <button class="btn-send" onclick="sendMessage()">➤</button>
                 </div>
                 <button class="btn-next" onclick="nextPerson()">SIGUIENTE PERSONA ➔</button>
             </section>
         </div>
 
-        <aside class="ad-sidebar">BANNER DERECHO</aside>
+        <aside class="ad-sidebar">ADS</aside>
     </div>
 
-    <div class="bottom-ad-bar">PUBLICIDAD INFERIOR • PROMOCIÓN ROULOTTE LIVE</div>
+    <div class="bottom-ad-bar">PUBLICIDAD INFERIOR</div>
     <footer class="footer">ROULOTTE LIVE &copy; 2026</footer>
 
 <script>
@@ -95,37 +114,25 @@
 
     let localStream, peer, myId, currentCall, dataConn;
 
-    // Lógica de cámara ultra-compatible
     async function initCamera() {
-        const constraints = { 
-            video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
-            audio: true 
-        };
-        
         try {
-            // Intentamos obtener el stream
-            localStream = await navigator.mediaDevices.getUserMedia(constraints);
-            const videoElement = document.getElementById('localVideo');
-            videoElement.srcObject = localStream;
-            
-            // Forzar play (algunos navegadores lo pausan al inicio)
-            videoElement.onloadedmetadata = () => videoElement.play();
-            
-            addMsg("Cámara detectada con éxito.", "sys");
-            initPeer();
+            // Constraints básicos para máxima compatibilidad
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localStream = stream;
+            const v = document.getElementById('localVideo');
+            v.srcObject = stream;
+            v.play();
+            document.getElementById('force-cam').style.display = 'none';
+            addMsg("Cámara activada.", "sys");
+            if(!peer) initPeer();
         } catch (e) {
-            console.error("Fallo de cámara:", e);
-            addMsg("SISTEMA: No se pudo acceder a la cámara. Revisa si otra app la usa.", "sys");
+            alert("Error de cámara: Asegúrate de dar permiso en el candado de arriba.");
         }
     }
 
     function initPeer() {
         myId = 'rlt-' + Math.floor(Math.random() * 99999);
         peer = new Peer(myId);
-        peer.on('open', () => {
-            document.getElementById('db-status').innerText = "CONEXIÓN: ONLINE";
-            document.getElementById('db-status').style.color = "#2ecc71";
-        });
         peer.on('call', call => { call.answer(localStream); setupRemote(call); });
         peer.on('connection', conn => {
             dataConn = conn;
@@ -154,7 +161,9 @@
     function setupRemote(call) {
         currentCall = call;
         call.on('stream', s => {
-            document.getElementById('remoteVideo').srcObject = s;
+            const rv = document.getElementById('remoteVideo');
+            rv.srcObject = s;
+            rv.play();
             document.getElementById('status-display').innerText = "SISTEMA: EN VIVO ✅";
         });
     }
@@ -177,7 +186,7 @@
         win.scrollTop = win.scrollHeight;
     }
 
-    // Arrancamos todo
+    // Intentar arranque automático al cargar
     window.onload = initCamera;
 </script>
 </body>
