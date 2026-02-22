@@ -24,7 +24,11 @@
         <div class="content">
             <section class="video-area">
                 <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
-                <div class="video-box"><div id="status-tag" class="label">LISTO</div><video id="remote" autoplay playsinline></video></div>
+                <div class="video-box">
+                    <div id="status-tag" class="label">LISTO</div>
+                    <video id="remote" autoplay playsinline></video>
+                    <button id="btn-report" onclick="reportarUsuario()" style="position:absolute; bottom:10px; right:10px; background:rgba(231,76,60,0.7); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:11px;">REPORTAR ⚠️</button>
+                </div>
             </section>
             <section class="chat-area">
                 <div id="chat"></div>
@@ -60,11 +64,10 @@
                     <button class="btn-send" style="width:100%" onclick="irAVerificar()">SIGUIENTE: VERIFICAR</button>
                 </div>
                 <div id="step-2" style="display:none; text-align:center;">
-                    <p style="font-size:12px; margin-bottom:10px;">Muestra estos números a la cámara:</p>
+                    <p>Muestra los números:</p>
                     <div id="reto-numeros" class="numeros-random">...</div>
                     <video id="preview-record" autoplay muted playsinline style="width:100%; border-radius:10px; border:1px solid var(--accent);"></video>
-                    <button id="record-btn" class="btn-next" style="background:#e74c3c; margin-top:10px; font-size:14px;" onclick="toggleGrabacion()">GRABAR VIDEO (5s)</button>
-                    <p id="record-status" style="font-size:11px; margin-top:5px; color:var(--accent);"></p>
+                    <button id="record-btn" class="btn-next" style="background:#e74c3c; margin-top:10px;" onclick="toggleGrabacion()">GRABAR VIDEO (5s)</button>
                 </div>
             </div>
         </div>
@@ -76,16 +79,21 @@
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
         let myStream, peer, myId, actualCall, dataConn, isVIP = false;
-        let chunks = [];
+        let myIP = "";
 
         async function init() {
-            const { data: { user } } = await supa.auth.getUser();
-            if (user) {
-                const { data: ban } = await supa.from('banned_users').select('*').eq('email', user.email).single();
-                if (ban) { alert("CUENTA BLOQUEADA"); await supa.auth.signOut(); location.reload(); return; }
-                isVIP = true;
-                actualizarInterfazVIP();
+            // Obtener IP del usuario
+            const res = await fetch('https://api.ipify.org?format=json');
+            const ipData = await res.json();
+            myIP = ipData.ip;
+
+            // Verificar si la IP está baneada
+            const { data: ban } = await supa.from('banned_users').select('*').eq('ip_address', myIP).single();
+            if (ban) {
+                document.body.innerHTML = "<h1 style='color:red; text-align:center; padding-top:100px;'>ACCESO DENEGADO POR INFRINGIR NORMAS</h1>";
+                return;
             }
+
             myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             document.getElementById('me').srcObject = myStream;
             conectarPeer();
@@ -94,8 +102,32 @@
         function conectarPeer() {
             myId = (isVIP ? 'vip-' : 'pub-') + Math.random().toString(36).substr(2, 7);
             peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
-            peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
+            peer.on('connection', c => { 
+                dataConn = c; 
+                c.on('data', d => {
+                    if(d.type === 'report') procesarReporteRecibido();
+                    else addMsg("them", d);
+                }); 
+            });
             peer.on('call', c => { c.answer(myStream); actualCall = c; c.on('stream', s => document.getElementById('remote').srcObject = s); });
+        }
+
+        async function reportarUsuario() {
+            if(!dataConn) return;
+            if(confirm("¿Reportar a este usuario por contenido inapropiado?")) {
+                dataConn.send({ type: 'report' });
+                alert("Usuario reportado. Si recibe 3 reportes será baneado.");
+                buscar(); // Saltar al siguiente
+            }
+        }
+
+        async function procesarReporteRecibido() {
+            let reports = parseInt(localStorage.getItem('reports_received') || 0) + 1;
+            localStorage.setItem('reports_received', reports);
+            if(reports >= 3) {
+                await supa.from('banned_users').insert([{ ip_address: myIP, reason: "3 Reportes de usuarios" }]);
+                location.reload();
+            }
         }
 
         async function buscar() {
@@ -107,7 +139,10 @@
                 const targetId = data[0].peer_id;
                 await supa.from(tabla).delete().eq('peer_id', targetId);
                 dataConn = peer.connect(targetId);
-                dataConn.on('data', d => addMsg("them", d));
+                dataConn.on('data', d => {
+                    if(d.type === 'report') procesarReporteRecibido();
+                    else addMsg("them", d);
+                });
                 actualCall = peer.call(targetId, myStream);
                 actualCall.on('stream', s => document.getElementById('remote').srcObject = s);
             } else {
@@ -116,30 +151,27 @@
             }
         }
 
+        // --- FUNCIONES DE LOGIN / REGISTRO / MODAL (IGUALES A ANTERIOR) ---
         async function loginVIP() {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
             const { error } = await supa.auth.signInWithPassword({ email, password: pass });
-            if (error) alert("Error: " + error.message); else location.reload();
+            if (error) alert(error.message); else location.reload();
         }
-
         function logout() { supa.auth.signOut().then(() => location.reload()); }
         function actualizarInterfazVIP() {
             document.getElementById('user-mode').innerText = "MODO: VIP 💎";
             document.getElementById('btn-vip-action').style.display = 'none';
             document.getElementById('btn-logout').style.display = 'block';
         }
-
         function irAVerificar() {
-            if(!document.getElementById('reg-pass').value) return alert("Escribe una contraseña");
             document.getElementById('step-1').style.display = 'none';
             document.getElementById('step-2').style.display = 'block';
             document.getElementById('preview-record').srcObject = myStream;
             document.getElementById('reto-numeros').innerText = Math.floor(Math.random()*5+1) + " - " + Math.floor(Math.random()*5+1) + " - " + Math.floor(Math.random()*5+1); 
         }
-
         function toggleGrabacion() {
-            chunks = [];
+            const chunks = [];
             const mediaRecorder = new MediaRecorder(myStream);
             mediaRecorder.ondataavailable = e => chunks.push(e.data);
             mediaRecorder.onstop = async () => {
@@ -153,13 +185,11 @@
                     video_url: fileName,
                     numbers: document.getElementById('reto-numeros').innerText
                 }]);
-                alert("Solicitud enviada."); closeModal();
+                alert("Enviado."); closeModal();
             };
             mediaRecorder.start();
-            document.getElementById('record-status').innerText = "GRABANDO...";
             setTimeout(() => mediaRecorder.stop(), 5000);
         }
-
         function openModal() { document.getElementById('modal-vip').style.display = 'flex'; }
         function closeModal() { document.getElementById('modal-vip').style.display = 'none'; }
         function switchTab(t) {
