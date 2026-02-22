@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Network VIP</title>
+    <title>Roulotte Live VIP 2026</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -12,10 +12,14 @@
 
     <header class="header">
         <div class="logo">Roulotte Live</div>
-        <button class="btn-vip-open" onclick="openModal()">HACERSE VIP 💎</button>
+        <div id="status-container" style="display:flex; gap:10px; align-items:center;">
+            <span id="user-mode" style="color: var(--accent); font-size: 12px; font-weight: bold;">MODO: PÚBLICO</span>
+            <button id="btn-vip-action" class="btn-vip-open" onclick="openModal()">HACERSE VIP 💎</button>
+            <button id="btn-logout" class="btn-vip-open" style="display:none; background:#444;" onclick="logout()">SALIR</button>
+        </div>
     </header>
 
-    <div class="ad-top">PUBLICIDAD SUPERIOR</div>
+    <div class="ad-top">ESPACIO PUBLICITARIO</div>
 
     <main class="main-wrapper">
         <aside class="ad-side">ADS</aside>
@@ -23,23 +27,22 @@
         <div class="content">
             <section class="video-area">
                 <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
-                <div class="video-box"><div id="status-tag" class="label">BUSCANDO...</div><video id="remote" autoplay playsinline></video></div>
+                <div class="video-box"><div id="status-tag" class="label">LISTO</div><video id="remote" autoplay playsinline></video></div>
             </section>
 
             <section class="chat-area">
                 <div id="chat"></div>
-                
                 <div class="chat-controls">
                     <div id="emoji-picker">
-                        <span onclick="addEmoji('😀')">😀</span><span onclick="addEmoji('😂')">😂</span><span onclick="addEmoji('🔥')">🔥</span><span onclick="addEmoji('😈')">😈</span>
+                        <span onclick="addEmoji('😀')">😀</span><span onclick="addEmoji('🔥')">🔥</span>
+                        <span onclick="addEmoji('💎')">💎</span><span onclick="addEmoji('😈')">😈</span>
                     </div>
                     <div class="input-container">
                         <span style="cursor:pointer" onclick="toggleEmojis()">😊</span>
-                        <input type="text" id="chat-input" placeholder="Escribe algo..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
                         <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
                     </div>
                 </div>
-
                 <button class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
             </section>
         </div>
@@ -49,51 +52,136 @@
     <div id="modal-vip" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
-            <h2>REGISTRO VIP 💎</h2>
-            <div id="step-1">
-                <input type="text" id="reg-name" placeholder="Nombre de Usuario">
-                <input type="email" id="reg-email" placeholder="Correo Electrónico">
-                <input type="password" id="reg-pass" placeholder="Contraseña">
-                <button class="btn-send" onclick="irAVerificar()">SIGUIENTE: VERIFICAR</button>
+            
+            <div style="display:flex; gap:20px; margin-bottom:20px; border-bottom:1px solid #333;">
+                <h3 id="tab-login" onclick="switchTab('login')" style="cursor:pointer; color:var(--accent);">LOGIN</h3>
+                <h3 id="tab-reg" onclick="switchTab('reg')" style="cursor:pointer; color:#666;">REGISTRO</h3>
             </div>
 
-            <div id="step-2" style="display:none; text-align:center;">
-                <p>Muestra estos números con la mano:</p>
-                <div id="reto-numeros" class="numeros-random">...</div>
-                <video id="preview-record" autoplay muted playsinline style="width:100%; border-radius:10px; background:#000;"></video>
-                <button id="record-btn" class="btn-next" style="background:#e74c3c; margin-top:10px;" onclick="toggleGrabacion()">GRABAR VIDEO (5s)</button>
-                <p id="record-status" style="font-size:12px; margin-top:5px; color:var(--accent);"></p>
+            <div id="section-login">
+                <input type="email" id="login-email" placeholder="Email VIP">
+                <input type="password" id="login-pass" placeholder="Contraseña">
+                <button class="btn-send" style="width:100%" onclick="loginVIP()">ENTRAR COMO VIP 💎</button>
+            </div>
+
+            <div id="section-reg" style="display:none;">
+                <div id="step-1">
+                    <input type="text" id="reg-name" placeholder="Nombre de Usuario">
+                    <input type="email" id="reg-email" placeholder="Correo">
+                    <input type="password" id="reg-pass" placeholder="Contraseña">
+                    <button class="btn-send" style="width:100%" onclick="irAVerificar()">SIGUIENTE: VERIFICAR</button>
+                </div>
+                <div id="step-2" style="display:none; text-align:center;">
+                    <p style="font-size:12px; margin-bottom:10px;">Muestra estos números a la cámara:</p>
+                    <div id="reto-numeros" class="numeros-random">...</div>
+                    <video id="preview-record" autoplay muted playsinline style="width:100%; border-radius:10px; border:1px solid var(--accent);"></video>
+                    <button id="record-btn" class="btn-next" style="background:#e74c3c; margin-top:10px; font-size:14px; padding:10px;" onclick="toggleGrabacion()">GRABAR VERIFICACIÓN (5s)</button>
+                    <p id="record-status" style="font-size:11px; margin-top:5px; color:var(--accent);"></p>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="ad-bottom">PUBLICIDAD INFERIOR</div>
     <footer class="footer-final">ROULOTTE NETWORK &copy; 2026</footer>
 
     <script>
+        // CONFIGURACIÓN SUPABASE
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        const SUPA_KEY = "TU_KEY_AQUI"; // USA TU ANON KEY
+        const SUPA_KEY = "TU_ANON_KEY_AQUI"; 
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
         let myStream, peer, myId, actualCall, dataConn;
+        let isVIP = false;
         let mediaRecorder, chunks = [];
 
         async function init() {
-            myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('me').srcObject = myStream;
-            conectarPeer();
+            try {
+                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('me').srcObject = myStream;
+                conectarPeer();
+            } catch (err) { alert("Acceso a cámara denegado."); }
         }
 
-        // --- LÓGICA VIP Y GRABACIÓN ---
+        function conectarPeer() {
+            // Generar ID según modo
+            myId = (isVIP ? 'vip-' : 'pub-') + Math.random().toString(36).substr(2, 7);
+            peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
+            
+            peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
+            peer.on('call', c => { 
+                c.answer(myStream); 
+                actualCall = c; 
+                c.on('stream', s => document.getElementById('remote').srcObject = s); 
+            });
+        }
+
+        // LÓGICA DE EMPAREJAMIENTO (SALA SEPARADA)
+        async function buscar() {
+            const tabla = isVIP ? 'vip_users' : 'profiles'; 
+            addMsg("them", `Buscando en sala ${isVIP ? 'VIP' : 'Pública'}...`);
+            
+            if(actualCall) actualCall.close();
+            document.getElementById('remote').srcObject = null;
+
+            const { data } = await supa.from(tabla).select('peer_id').neq('peer_id', myId).limit(1);
+
+            if (data && data[0]) {
+                const targetId = data[0].peer_id;
+                await supa.from(tabla).delete().eq('peer_id', targetId);
+                dataConn = peer.connect(targetId);
+                dataConn.on('data', d => addMsg("them", d));
+                actualCall = peer.call(targetId, myStream);
+                actualCall.on('stream', s => document.getElementById('remote').srcObject = s);
+            } else {
+                await supa.from(tabla).insert([{ peer_id: myId }]);
+                addMsg("them", "Esperando pareja...");
+            }
+        }
+
+        // --- GESTIÓN DE MODAL Y VIP ---
         function openModal() { document.getElementById('modal-vip').style.display = 'flex'; }
         function closeModal() { document.getElementById('modal-vip').style.display = 'none'; }
+        
+        function switchTab(tab) {
+            const isLogin = tab === 'login';
+            document.getElementById('section-login').style.display = isLogin ? 'block' : 'none';
+            document.getElementById('section-reg').style.display = isLogin ? 'none' : 'block';
+            document.getElementById('tab-login').style.color = isLogin ? 'var(--accent)' : '#666';
+            document.getElementById('tab-reg').style.color = isLogin ? '#666' : 'var(--accent)';
+        }
+
+        async function loginVIP() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            
+            const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+            
+            if (error) { alert("Error: " + error.message); } 
+            else {
+                isVIP = true;
+                actualizarInterfazVIP();
+                closeModal();
+                buscar(); // Iniciar búsqueda en sala VIP
+            }
+        }
+
+        function logout() {
+            supa.auth.signOut();
+            isVIP = false;
+            location.reload(); // Reiniciar para volver a modo público
+        }
+
+        function actualizarInterfazVIP() {
+            document.getElementById('user-mode').innerText = "MODO: VIP 💎";
+            document.getElementById('btn-vip-action').style.display = 'none';
+            document.getElementById('btn-logout').style.display = 'block';
+        }
 
         function irAVerificar() {
             document.getElementById('step-1').style.display = 'none';
             document.getElementById('step-2').style.display = 'block';
             document.getElementById('preview-record').srcObject = myStream;
-            // Generar reto desde tu tabla o azar
-            document.getElementById('reto-numeros').innerText = "2 - 4 - 1"; 
+            document.getElementById('reto-numeros').innerText = "3 - 5 - 2"; 
         }
 
         function toggleGrabacion() {
@@ -102,62 +190,32 @@
             mediaRecorder.ondataavailable = e => chunks.push(e.data);
             mediaRecorder.onstop = async () => {
                 const blob = new Blob(chunks, { type: 'video/mp4' });
-                enviarSolicitudVIP(blob);
+                const fileName = `v_${Date.now()}.mp4`;
+                const { data, error } = await supa.storage.from('verifications').upload(fileName, blob);
+                if(!error) {
+                    await supa.from('verification_requests').insert([{
+                        username: document.getElementById('reg-name').value,
+                        email: document.getElementById('reg-email').value,
+                        video_url: fileName,
+                        numbers: "3-5-2"
+                    }]);
+                    alert("¡Video enviado! Un admin te activará el acceso VIP pronto.");
+                    closeModal();
+                }
             };
-            
             mediaRecorder.start();
-            document.getElementById('record-status').innerText = "GRABANDO...";
-            setTimeout(() => {
-                mediaRecorder.stop();
-                document.getElementById('record-status').innerText = "ENVIANDO SOLICITUD...";
-            }, 5000);
+            document.getElementById('record-status').innerText = "GRABANDO... MOSTRAR DEDOS";
+            setTimeout(() => mediaRecorder.stop(), 5000);
         }
 
-        async function enviarSolicitudVIP(videoBlob) {
-            const fileName = `verif_${Date.now()}.mp4`;
-            // 1. Subir a Storage
-            const { data, error } = await supa.storage.from('verifications').upload(fileName, videoBlob);
-            
-            if(!error) {
-                // 2. Insertar en tabla
-                await supa.from('verification_requests').insert([{
-                    username: document.getElementById('reg-name').value,
-                    email: document.getElementById('reg-email').value,
-                    video_url: fileName,
-                    numbers: document.getElementById('reto-numeros').innerText
-                }]);
-                alert("Solicitud enviada. El admin te verificará pronto.");
-                closeModal();
-            }
-        }
-
-        // --- LÓGICA DE PEERJS IGUAL QUE ANTES ---
-        function conectarPeer() {
-            myId = 'u-' + Math.random().toString(36).substr(2, 7);
-            peer = new Peer(myId, { secure: true, host: '0.peerjs.com', port: 443 });
-            peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
-            peer.on('call', c => { c.answer(myStream); actualCall = c; c.on('stream', s => document.getElementById('remote').srcObject = s); });
-        }
-
-        async function buscar() {
-            addMsg("them", "Buscando...");
-            if(actualCall) actualCall.close();
-            const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
-            if (data?.[0]) {
-                const tid = data[0].peer_id;
-                await supa.from('profiles').delete().eq('peer_id', tid);
-                dataConn = peer.connect(tid);
-                dataConn.on('data', d => addMsg("them", d));
-                actualCall = peer.call(tid, myStream);
-                actualCall.on('stream', s => document.getElementById('remote').srcObject = s);
-            } else {
-                await supa.from('profiles').insert([{ peer_id: myId }]);
-            }
-        }
-
+        // --- CHAT Y EXTRAS ---
         function enviarMensaje() {
             const i = document.getElementById('chat-input');
-            if (i.value && dataConn) { dataConn.send(i.value); addMsg("me", i.value); i.value = ""; }
+            if (i.value && dataConn) {
+                dataConn.send(i.value);
+                addMsg("me", i.value);
+                i.value = "";
+            }
         }
 
         function addMsg(t, x) {
@@ -165,6 +223,12 @@
             c.innerHTML += `<div class="msg ${t}">${x}</div>`;
             c.scrollTop = c.scrollHeight;
         }
+
+        function toggleEmojis() { 
+            const p = document.getElementById('emoji-picker');
+            p.style.display = p.style.display === 'grid' ? 'none' : 'grid';
+        }
+        function addEmoji(e) { document.getElementById('chat-input').value += e; }
 
         window.onload = init;
     </script>
