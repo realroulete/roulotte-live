@@ -2,78 +2,104 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="robots" content="noindex, nofollow"> <title>Admin Panel - Roulotte</title>
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin - Moderación Roulotte</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Estilo oscuro similar al index */
-        body { background: #050505; color: white; font-family: sans-serif; }
-        .admin-container { max-width: 1000px; margin: auto; padding: 20px; }
-        .request-card { background: #111; border: 1px solid #222; padding: 20px; margin: 15px 0; display: flex; gap: 20px; }
-        .video-prev { width: 250px; background: #000; }
-        .btn-approve { background: #2ecc71; padding: 10px; border: none; cursor: pointer; }
-        .btn-reject { background: #e74c3c; padding: 10px; border: none; cursor: pointer; }
+        :root { --accent: #f1c40f; --success: #2ecc71; --danger: #e74c3c; }
+        body { background: #050505; color: white; font-family: sans-serif; padding: 20px; }
+        h1 { color: var(--accent); border-bottom: 2px solid #111; padding-bottom: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card { background: #111; border: 1px solid #222; padding: 15px; border-radius: 10px; }
+        video { width: 100%; border-radius: 5px; background: #000; margin: 10px 0; }
+        .info { margin-bottom: 15px; }
+        .info span { color: var(--accent); font-weight: bold; }
+        .actions { display: flex; gap: 10px; }
+        button { flex: 1; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn-app { background: var(--success); color: #000; }
+        .btn-rej { background: var(--danger); color: #fff; }
+        #login-overlay { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 100; }
     </style>
 </head>
 <body>
-    <div class="admin-container">
-        <h1>Control de Moderación VIP</h1>
-        
-        <div id="lista-solicitudes">
-            <div class="request-card">
-                <div class="info">
-                    <h3>Usuario: @Celia_98</h3>
-                    <p>Reto: 3 - 1 - 4</p>
-                    <button class="btn-approve" onclick="aprobarUser('id_user')">APROBAR VIP</button>
-                    <button class="btn-reject" onclick="rechazarUser('id_user')">RECHAZAR</button>
-                </div>
-                <video class="video-prev" src="link_al_video_en_supabase_storage" controls></video>
-            </div>
+
+    <div id="login-overlay">
+        <div style="text-align:center">
+            <h2>Acceso Administrativo</h2>
+            <input type="password" id="admin-pass" placeholder="Contraseña de acceso" style="padding:10px; border-radius:5px; border:none;">
+            <button onclick="checkPass()" style="background:var(--accent); width:auto; margin-left:10px;">Entrar</button>
         </div>
     </div>
 
-    <script>
-        // Lógica para:
-        // 1. Leer archivos de Verification_Requests
-        // 2. Al Aprobar: Mover de 'profiles' a 'vip_users' y borrar video de Storage.
-        // 3. Al Rechazar: Borrar solicitud y banear IP si es necesario.
-    </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="robots" content="noindex, nofollow"> <title>Admin Panel - Roulotte</title>
-    <style>
-        /* Estilo oscuro similar al index */
-        body { background: #050505; color: white; font-family: sans-serif; }
-        .admin-container { max-width: 1000px; margin: auto; padding: 20px; }
-        .request-card { background: #111; border: 1px solid #222; padding: 20px; margin: 15px 0; display: flex; gap: 20px; }
-        .video-prev { width: 250px; background: #000; }
-        .btn-approve { background: #2ecc71; padding: 10px; border: none; cursor: pointer; }
-        .btn-reject { background: #e74c3c; padding: 10px; border: none; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="admin-container">
-        <h1>Control de Moderación VIP</h1>
-        
-        <div id="lista-solicitudes">
-            <div class="request-card">
-                <div class="info">
-                    <h3>Usuario: @Celia_98</h3>
-                    <p>Reto: 3 - 1 - 4</p>
-                    <button class="btn-approve" onclick="aprobarUser('id_user')">APROBAR VIP</button>
-                    <button class="btn-reject" onclick="rechazarUser('id_user')">RECHAZAR</button>
-                </div>
-                <video class="video-prev" src="link_al_video_en_supabase_storage" controls></video>
-            </div>
+    <h1>Solicitudes VIP Pendientes</h1>
+    <div id="lista-solicitudes" class="grid">
         </div>
-    </div>
 
     <script>
-        // Lógica para:
-        // 1. Leer archivos de Verification_Requests
-        // 2. Al Aprobar: Mover de 'profiles' a 'vip_users' y borrar video de Storage.
-        // 3. Al Rechazar: Borrar solicitud y banear IP si es necesario.
+        const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
+        const SUPA_KEY = "TU_ANON_KEY_AQUI"; // La misma que usas en el index
+        const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+        // Seguridad básica para el archivo
+        function checkPass() {
+            const pass = document.getElementById('admin-pass').value;
+            if(pass === "TU_CONTRASEÑA_ADMIN") { // CAMBIA ESTO
+                document.getElementById('login-overlay').style.display = 'none';
+                cargarSolicitudes();
+            } else { alert("Acceso denegado"); }
+        }
+
+        async function cargarSolicitudes() {
+            const { data, error } = await supa
+                .from('verification_requests')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) return console.error(error);
+
+            const contenedor = document.getElementById('lista-solicitudes');
+            contenedor.innerHTML = "";
+
+            data.forEach(req => {
+                // Generar la URL pública del video
+                const videoURL = `${SUPA_URL}/storage/v1/object/public/verifications/${req.video_url}`;
+                
+                contenedor.innerHTML += `
+                    <div class="card" id="card-${req.id}">
+                        <div class="info">
+                            <p><span>Usuario:</span> ${req.username}</p>
+                            <p><span>Email:</span> ${req.email}</p>
+                            <p><span>Reto:</span> ${req.numbers}</p>
+                        </div>
+                        <video src="${videoURL}" controls></video>
+                        <div class="actions">
+                            <button class="btn-app" onclick="aprobar('${req.id}', '${req.email}', '${req.username}')">APROBAR</button>
+                            <button class="btn-rej" onclick="rechazar('${req.id}', '${req.video_url}')">RECHAZAR</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function aprobar(id, email, username) {
+            // 1. Aquí podrías usar supa.auth para crear el usuario oficialmente
+            // O simplemente moverlo a tu tabla de 'vip_users'
+            alert(`Usuario ${username} aprobado. Ahora debes crear su cuenta VIP.`);
+            // Borramos la solicitud tras procesar
+            await supa.from('verification_requests').delete().eq('id', id);
+            document.getElementById(`card-${id}`).remove();
+        }
+
+        async function rechazar(id, videoPath) {
+            if(!confirm("¿Seguro que quieres rechazar esta solicitud?")) return;
+            
+            // 1. Borrar registro de la tabla
+            await supa.from('verification_requests').delete().eq('id', id);
+            // 2. Borrar video del storage para no ocupar espacio
+            await supa.storage.from('verifications').remove([videoPath]);
+            
+            document.getElementById(`card-${id}`).remove();
+        }
     </script>
 </body>
 </html>
