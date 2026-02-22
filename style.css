@@ -13,71 +13,82 @@ body {
     display: flex; flex-direction: column; height: 100vh; overflow: hidden; 
 }
 
-/* HEADER & BANNERS */
+/* ESTRUCTURA DE BANNERS */
 .header { height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
 .logo { color: var(--accent); font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
-
 .ad-top, .ad-bottom { height: 45px; background: #080808; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; flex-shrink: 0; border: 1px solid var(--border); }
 .footer-final { height: 25px; background: #000; color: #333; font-size: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-/* LAYOUT */
 .main-wrapper { display: flex; flex: 1; min-height: 0; }
 .ad-side { width: 80px; background: #000; display: flex; align-items: center; justify-content: center; color: #111; font-size: 9px; writing-mode: vertical-rl; flex-shrink: 0; }
 .content { flex: 1; display: flex; flex-direction: row; }
 
-/* VIDEOS CUADRADOS */
+/* VIDEOS 50/50 CUADRADOS */
 .video-area { width: 50%; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
-.video-box { flex: 1; position: relative; background: #000; border-bottom: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; }
-video { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 1/1; }
+.video-box { 
+    flex: 1; /* Ocupa el 50% de la altura del contenedor */
+    position: relative; 
+    background: #000; 
+    border-bottom: 1px solid var(--border); 
+    overflow: hidden; 
+}
+video { 
+    width: 100%; height: 100%; 
+    object-fit: cover; /* Recorta para llenar sin deformar */
+}
 .label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: var(--accent); padding: 4px 8px; font-size: 10px; font-weight: bold; z-index: 20; border: 1px solid var(--accent); border-radius: 4px; }
 
-/* CHAT MODERNO */
+/* CHAT AREA */
 .chat-area { width: 50%; display: flex; flex-direction: column; background: var(--gray); }
 
-/* Botón Siguiente (Personalizable por dispositivo) */
 .btn-next { 
     padding: 20px; background: #2ecc71; color: #000; border: none; font-size: 1.3rem; font-weight: 900; 
     cursor: pointer; text-transform: uppercase; flex-shrink: 0; border-bottom: 2px solid #27ae60;
 }
 
 #chat { flex: 1; padding: 20px; overflow-y: auto; font-size: 14px; display: flex; flex-direction: column; gap: 8px; }
-.msg { padding: 8px 12px; border-radius: 8px; max-width: 80%; word-wrap: break-word; }
+.msg { padding: 8px 12px; border-radius: 8px; max-width: 85%; line-height: 1.4; }
 .msg.me { background: var(--accent); color: #000; align-self: flex-end; font-weight: 500; }
 .msg.them { background: #222; color: #fff; align-self: flex-start; }
 
-/* CONTROLES DE CHAT GRANDES */
+/* NUEVO DISEÑO DE INPUT */
 .chat-controls {
-    display: flex; flex-direction: column; padding: 15px; background: #151515; border-top: 1px solid var(--border);
+    padding: 15px; background: #111; border-top: 1px solid var(--border);
 }
 
-.input-group { display: flex; gap: 10px; height: 55px; } /* Más grande en PC */
+.input-container {
+    display: flex; background: #000; border: 2px solid var(--accent); border-radius: 30px; 
+    padding: 5px 5px 5px 15px; align-items: center; gap: 10px;
+}
 
 #chat-input {
-    flex: 1; background: #000; border: 2px solid var(--accent); padding: 0 15px; color: #fff; 
-    border-radius: 8px; font-size: 1rem; outline: none;
+    flex: 1; background: transparent; border: none; color: #fff; font-size: 1rem; outline: none; padding: 10px 0;
 }
 
-.emoji-btn { background: #222; border: 1px solid #444; color: white; padding: 0 15px; border-radius: 8px; cursor: pointer; font-size: 1.2rem; }
+.emoji-trigger { background: none; border: none; font-size: 1.4rem; cursor: pointer; padding: 0 5px; }
 
-.btn-send {
-    background: var(--accent); color: #000; border: none; padding: 0 25px; 
-    font-weight: 900; border-radius: 8px; cursor: pointer; transition: 0.2s;
+.btn-send-circle {
+    background: var(--accent); color: #000; border: none; width: 45px; height: 45px; 
+    border-radius: 50%; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: 0.2s;
 }
 
-.btn-send:hover { background: #d4ac0d; }
+.btn-send-circle:hover { transform: scale(1.05); }
 
-/* RESPONSIVE MÓVIL */
+/* SELECTOR EMOJIS ORDENADOR/MÓVIL */
+#emoji-picker {
+    display: none; background: #1a1a1a; padding: 10px; border-radius: 10px; 
+    margin-bottom: 10px; grid-template-columns: repeat(6, 1fr); gap: 10px; text-align: center;
+}
+#emoji-picker span { cursor: pointer; font-size: 1.5rem; }
+
+/* RESPONSIVE */
 @media (max-width: 800px) {
     body { overflow-y: auto; height: auto; }
     .main-wrapper { display: block; }
     .content { flex-direction: column; }
-    .video-area { width: 100%; height: 500px; }
+    .video-area { width: 100%; height: 600px; } /* Forzamos altura para ver los 2 cuadrados */
     .chat-area { width: 100%; height: 500px; }
     .ad-side { display: none; }
-    
-    /* Subir el botón de Siguiente arriba del chat en móvil */
-    .chat-area { flex-direction: column; }
-    .btn-next { order: -1; background: #e67e22; color: white; } /* Color naranja en móvil */
-    .chat-controls { padding: 10px; }
-    .input-group { height: 45px; }
+    .btn-next { order: -1; background: #e67e22; color: white; }
 }
