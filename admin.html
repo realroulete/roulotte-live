@@ -3,103 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="robots" content="noindex, nofollow">
-    <title>Admin - Moderación Roulotte</title>
+    <title>Admin - Panel Roulotte</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --accent: #f1c40f; --success: #2ecc71; --danger: #e74c3c; }
         body { background: #050505; color: white; font-family: sans-serif; padding: 20px; }
-        h1 { color: var(--accent); border-bottom: 2px solid #111; padding-bottom: 10px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; margin-top: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .card { background: #111; border: 1px solid #222; padding: 15px; border-radius: 10px; }
-        video { width: 100%; border-radius: 5px; background: #000; margin: 10px 0; }
-        .info { margin-bottom: 15px; }
-        .info span { color: var(--accent); font-weight: bold; }
-        .actions { display: flex; gap: 10px; }
-        button { flex: 1; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .btn-app { background: var(--success); color: #000; }
-        .btn-rej { background: var(--danger); color: #fff; }
-        #login-overlay { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 100; }
+        video { width: 100%; border-radius: 5px; }
+        button { padding: 8px; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        .btn-app { background: var(--success); margin-right: 5px; }
+        .btn-rej { background: var(--danger); color: white; }
+        .ban-section { background: #1a1111; border: 1px solid var(--danger); padding: 20px; margin-top: 40px; border-radius: 10px; }
     </style>
 </head>
 <body>
+    <h1>Solicitudes VIP</h1>
+    <div id="lista-solicitudes" class="grid"></div>
 
-    <div id="login-overlay">
-        <div style="text-align:center">
-            <h2>Acceso Administrativo</h2>
-            <input type="password" id="admin-pass" placeholder="Contraseña de acceso" style="padding:10px; border-radius:5px; border:none;">
-            <button onclick="checkPass()" style="background:var(--accent); width:auto; margin-left:10px;">Entrar</button>
-        </div>
+    <div class="ban-section">
+        <h2>Banear Usuario Permanentemente</h2>
+        <input type="email" id="ban-email" placeholder="Email del usuario">
+        <input type="text" id="ban-reason" placeholder="Motivo del baneo">
+        <button class="btn-rej" onclick="ejecutarBaneo()">BANEAR AHORA</button>
     </div>
 
-    <h1>Solicitudes VIP Pendientes</h1>
-    <div id="lista-solicitudes" class="grid">
-        </div>
-
     <script>
-        const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        const SUPA_KEY = "TU_ANON_KEY_AQUI"; // La misma que usas en el index
-        const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+        const supa = supabase.createClient("TU_URL", "TU_KEY");
 
-        // Seguridad básica para el archivo
-        function checkPass() {
-            const pass = document.getElementById('admin-pass').value;
-            if(pass === "TU_CONTRASEÑA_ADMIN") { // CAMBIA ESTO
-                document.getElementById('login-overlay').style.display = 'none';
-                cargarSolicitudes();
-            } else { alert("Acceso denegado"); }
-        }
-
-        async function cargarSolicitudes() {
-            const { data, error } = await supa
-                .from('verification_requests')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) return console.error(error);
-
-            const contenedor = document.getElementById('lista-solicitudes');
-            contenedor.innerHTML = "";
-
-            data.forEach(req => {
-                // Generar la URL pública del video
-                const videoURL = `${SUPA_URL}/storage/v1/object/public/verifications/${req.video_url}`;
-                
-                contenedor.innerHTML += `
-                    <div class="card" id="card-${req.id}">
-                        <div class="info">
-                            <p><span>Usuario:</span> ${req.username}</p>
-                            <p><span>Email:</span> ${req.email}</p>
-                            <p><span>Reto:</span> ${req.numbers}</p>
-                        </div>
-                        <video src="${videoURL}" controls></video>
-                        <div class="actions">
-                            <button class="btn-app" onclick="aprobar('${req.id}', '${req.email}', '${req.username}')">APROBAR</button>
-                            <button class="btn-rej" onclick="rechazar('${req.id}', '${req.video_url}')">RECHAZAR</button>
-                        </div>
-                    </div>
-                `;
+        async function cargar() {
+            const { data } = await supa.from('verification_requests').select('*');
+            const cont = document.getElementById('lista-solicitudes');
+            cont.innerHTML = "";
+            data.forEach(r => {
+                const url = `TU_URL/storage/v1/object/public/verifications/${r.video_url}`;
+                cont.innerHTML += `
+                    <div class="card">
+                        <p><strong>${r.username}</strong> (${r.email})</p>
+                        <p>Reto: ${r.numbers}</p>
+                        <video src="${url}" controls></video>
+                        <button class="btn-app" onclick="alert('Crea la cuenta en Supabase Auth con: ${r.email}')">LISTO PARA REGISTRAR</button>
+                        <button class="btn-rej" onclick="borrar('${r.id}', '${r.video_url}')">BORRAR</button>
+                    </div>`;
             });
         }
 
-        async function aprobar(id, email, username) {
-            // 1. Aquí podrías usar supa.auth para crear el usuario oficialmente
-            // O simplemente moverlo a tu tabla de 'vip_users'
-            alert(`Usuario ${username} aprobado. Ahora debes crear su cuenta VIP.`);
-            // Borramos la solicitud tras procesar
+        async function borrar(id, path) {
             await supa.from('verification_requests').delete().eq('id', id);
-            document.getElementById(`card-${id}`).remove();
+            await supa.storage.from('verifications').remove([path]);
+            cargar();
         }
 
-        async function rechazar(id, videoPath) {
-            if(!confirm("¿Seguro que quieres rechazar esta solicitud?")) return;
-            
-            // 1. Borrar registro de la tabla
-            await supa.from('verification_requests').delete().eq('id', id);
-            // 2. Borrar video del storage para no ocupar espacio
-            await supa.storage.from('verifications').remove([videoPath]);
-            
-            document.getElementById(`card-${id}`).remove();
+        async function ejecutarBaneo() {
+            const email = document.getElementById('ban-email').value;
+            const reason = document.getElementById('ban-reason').value;
+            const { error } = await supa.from('banned_users').insert([{ email, reason }]);
+            if (error) alert(error.message); else alert("Usuario baneado.");
         }
+
+        window.onload = cargar;
     </script>
 </body>
 </html>
