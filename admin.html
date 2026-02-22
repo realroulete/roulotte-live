@@ -1,47 +1,79 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta name="robots" content="noindex, nofollow">
-    <title>Admin - Roulotte Control</title>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow"> <title>Admin Panel - Roulotte</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; padding: 20px; }
-        .card { background: #111; border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
-        .btn-verify { background: #2ecc71; color: #000; padding: 5px 10px; border: none; cursor: pointer; }
-        .btn-ban { background: #e74c3c; color: #fff; padding: 5px 10px; border: none; cursor: pointer; }
+        /* Estilo oscuro similar al index */
+        body { background: #050505; color: white; font-family: sans-serif; }
+        .admin-container { max-width: 1000px; margin: auto; padding: 20px; }
+        .request-card { background: #111; border: 1px solid #222; padding: 20px; margin: 15px 0; display: flex; gap: 20px; }
+        .video-prev { width: 250px; background: #000; }
+        .btn-approve { background: #2ecc71; padding: 10px; border: none; cursor: pointer; }
+        .btn-reject { background: #e74c3c; padding: 10px; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h1>Panel de Administración</h1>
-    
-    <div id="login-admin">
-        <input type="email" id="adm-email" placeholder="Admin Email">
-        <input type="password" id="adm-pass" placeholder="Contraseña">
-        <button onclick="loginAdmin()">Entrar</button>
-    </div>
-
-    <div id="admin-content" style="display:none;">
-        <h2>Solicitudes VIP Pendientes</h2>
-        <div id="requests-list">
-            <div class="card">
-                <p>Usuario: Juan123</p>
-                <video src="url_video_verificacion.mp4" width="200" controls></video>
-                <p>Reto: Dedos 2-5-1</p>
-                <button class="btn-verify">Aprobar VIP</button>
-                <button class="btn-ban">Rechazar/Ban</button>
+    <div class="admin-container">
+        <h1>Control de Moderación VIP</h1>
+        
+        <div id="lista-solicitudes">
+            <div class="request-card">
+                <div class="info">
+                    <h3>Usuario: @Celia_98</h3>
+                    <p>Reto: 3 - 1 - 4</p>
+                    <button class="btn-approve" onclick="aprobarUser('id_user')">APROBAR VIP</button>
+                    <button class="btn-reject" onclick="rechazarUser('id_user')">RECHAZAR</button>
+                </div>
+                <video class="video-prev" src="link_al_video_en_supabase_storage" controls></video>
             </div>
         </div>
-
-        <hr>
-        <h2>Gestionar Banners</h2>
-        <input type="text" placeholder="URL Imagen Banner Top">
-        <button>Actualizar Banners</button>
     </div>
 
     <script>
-        async function loginAdmin() {
-            // Lógica con supa.auth.signInWithPassword
-            // Si el email es el tuyo, mostrar admin-content
-        }
+        // Lógica para:
+        // 1. Leer archivos de Verification_Requests
+        // 2. Al Aprobar: Mover de 'profiles' a 'vip_users' y borrar video de Storage.
+        // 3. Al Rechazar: Borrar solicitud y banear IP si es necesario.
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow"> <title>Admin Panel - Roulotte</title>
+    <style>
+        /* Estilo oscuro similar al index */
+        body { background: #050505; color: white; font-family: sans-serif; }
+        .admin-container { max-width: 1000px; margin: auto; padding: 20px; }
+        .request-card { background: #111; border: 1px solid #222; padding: 20px; margin: 15px 0; display: flex; gap: 20px; }
+        .video-prev { width: 250px; background: #000; }
+        .btn-approve { background: #2ecc71; padding: 10px; border: none; cursor: pointer; }
+        .btn-reject { background: #e74c3c; padding: 10px; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Control de Moderación VIP</h1>
+        
+        <div id="lista-solicitudes">
+            <div class="request-card">
+                <div class="info">
+                    <h3>Usuario: @Celia_98</h3>
+                    <p>Reto: 3 - 1 - 4</p>
+                    <button class="btn-approve" onclick="aprobarUser('id_user')">APROBAR VIP</button>
+                    <button class="btn-reject" onclick="rechazarUser('id_user')">RECHAZAR</button>
+                </div>
+                <video class="video-prev" src="link_al_video_en_supabase_storage" controls></video>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lógica para:
+        // 1. Leer archivos de Verification_Requests
+        // 2. Al Aprobar: Mover de 'profiles' a 'vip_users' y borrar video de Storage.
+        // 3. Al Rechazar: Borrar solicitud y banear IP si es necesario.
     </script>
 </body>
 </html>
