@@ -2,39 +2,59 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body { 
-    background: var(--bg); color: #fff; font-family: sans-serif;
-    display: flex; flex-direction: column; min-height: 100vh;
+    background: var(--bg); 
+    color: #fff; 
+    font-family: sans-serif;
+    display: flex; 
+    flex-direction: column; 
+    height: 100vh; /* Ocupa el alto de la pantalla */
+    overflow: hidden; 
 }
 
-.header { height: 50px; border-bottom: 1px solid #222; display: flex; align-items: center; padding: 0 20px; }
+.header { height: 50px; border-bottom: 1px solid #222; display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
 .logo { color: var(--accent); font-weight: bold; text-transform: uppercase; }
 
-/* Contenedor con scroll para móviles */
 .main-wrapper { 
-    display: flex; flex: 1; 
+    display: flex; 
+    flex: 1; 
+    min-height: 0; /* Importante para que el scroll interno funcione */
 }
 
-.ad-side { width: 100px; background: #080808; display: flex; align-items: center; justify-content: center; color: #222; font-size: 10px; writing-mode: vertical-rl; }
+.ad-side { width: 100px; background: #080808; display: flex; align-items: center; justify-content: center; color: #333; font-size: 10px; writing-mode: vertical-rl; flex-shrink: 0; }
 
 .content { flex: 1; display: flex; flex-direction: row; }
 
-/* Simetría 50/50 */
+/* Simetría 50/50 corregida */
 .video-area { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #222; }
-.video-box { flex: 1; position: relative; background: #050505; border-bottom: 1px solid #222; }
-video { width: 100%; height: 100%; object-fit: cover; }
+.video-box { 
+    flex: 1; 
+    position: relative; 
+    background: #050505; 
+    border-bottom: 1px solid #222; 
+    overflow: hidden; /* Corta lo que sobre del vídeo */
+}
+
+/* Forzamos al vídeo a quedarse dentro de su caja */
+video { 
+    width: 100% !important; 
+    height: 100% !important; 
+    object-fit: cover; /* Recorta los bordes para llenar el espacio sin deformar */
+    display: block;
+}
 
 .chat-area { width: 50%; display: flex; flex-direction: column; background: #0a0a0a; }
-#chat { flex: 1; padding: 15px; overflow-y: auto; font-size: 13px; }
+#chat { flex: 1; padding: 15px; overflow-y: auto; font-size: 13px; color: #888; }
 
-.btn-next { padding: 25px; background: var(--danger); color: #fff; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; }
+.btn-next { padding: 25px; background: var(--danger); color: #fff; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; flex-shrink: 0; }
 
-/* Publicidad inferior */
-.ad-bottom { height: 50px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; }
+.ad-bottom { height: 50px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; flex-shrink: 0; }
 
+/* RESPONSIVE MÓVIL */
 @media (max-width: 800px) {
     .ad-side { display: none; }
-    .main-wrapper { display: block; overflow-y: auto; }
+    body { overflow-y: auto; height: auto; } /* Permitimos scroll en móvil */
+    .main-wrapper { display: block; }
     .content { flex-direction: column; }
-    .video-area { width: 100%; height: 60vh; }
-    .chat-area { width: 100%; height: 40vh; }
+    .video-area { width: 100%; height: 500px; }
+    .chat-area { width: 100%; height: 400px; }
 }
