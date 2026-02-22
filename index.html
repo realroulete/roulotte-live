@@ -10,101 +10,93 @@
         :root { --accent: #f1c40f; --danger: #ff4444; --bg: #000; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        /* Ajuste de Scroll para móviles y PC */
         body { 
-            background: var(--bg); 
-            color: #fff; 
-            font-family: 'Segoe UI', sans-serif; 
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            overflow-x: hidden;
+            background: var(--bg); color: #fff; font-family: sans-serif; 
+            display: flex; flex-direction: column; min-height: 100vh;
         }
 
-        /* Banners y Header */
         .header { height: 50px; background: #000; border-bottom: 1px solid #222; display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
-        .logo { color: var(--accent); font-weight: 900; font-size: 1.3rem; letter-spacing: 2px; }
+        .logo { color: var(--accent); font-weight: 900; letter-spacing: 2px; }
         .top-ad-bar { height: 40px; background: #080808; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555; flex-shrink: 0; }
 
-        .main-wrapper { display: flex; flex: 1; min-height: 0; }
+        /* Contenedor con Scroll habilitado */
+        .main-wrapper { display: flex; flex: 1; overflow-y: auto; position: relative; }
+        .ad-sidebar { width: 80px; background: #000; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 10px; writing-mode: vertical-rl; flex-shrink: 0; border: 1px solid #111; }
 
-        /* Banners Laterales */
-        .ad-sidebar { width: 100px; background: #000; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 10px; writing-mode: vertical-rl; flex-shrink: 0; border-left: 1px solid #111; border-right: 1px solid #111; }
+        /* App Layout */
+        .app-container { flex: 1; display: flex; background: #000; }
 
-        /* Contenedor Principal (Videos + Chat) */
-        .app-container { flex: 1; display: flex; overflow: hidden; }
-
-        /* Videos Izquierda (50% ancho en PC) */
-        .video-column { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #222; }
-        .v-box { flex: 1; position: relative; background: #050505; border-bottom: 1px solid #222; }
+        /* Simetría 50/50 */
+        .video-column { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #222; height: 100%; }
+        .v-box { flex: 1; position: relative; background: #050505; border-bottom: 1px solid #222; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; background: #000; }
 
-        /* Chat Derecha (50% ancho en PC) */
-        .chat-column { width: 50%; display: flex; flex-direction: column; background: #0a0a0a; }
+        .chat-column { width: 50%; display: flex; flex-direction: column; background: #0a0a0a; height: 100%; }
         #chat-window { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+        
+        /* Mensajes */
         .msg { padding: 8px 12px; border-radius: 8px; max-width: 85%; }
-        .msg.sys { color: var(--accent); font-style: italic; border-left: 2px solid var(--accent); padding-left: 8px; font-size: 11px; }
+        .msg.sys { color: var(--accent); font-style: italic; border-left: 2px solid var(--accent); padding-left: 8px; font-size: 11px; margin: 5px 0; }
         .msg.me { align-self: flex-end; background: #222; }
         .msg.them { align-self: flex-start; background: #111; border: 1px solid #333; }
 
-        /* Input y Botones */
+        /* Controles */
         .chat-input-area { padding: 10px; background: #000; border-top: 1px solid #222; display: flex; gap: 8px; }
         #chat-input { flex: 1; background: #050505; border: 1px solid #333; padding: 12px; color: white; border-radius: 6px; outline: none; }
-        .btn-send { background: var(--accent); color: #000; border: none; padding: 0 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-next { width: 100%; padding: 22px; background: var(--danger); color: white; border: none; font-size: 1.3rem; font-weight: 900; cursor: pointer; text-transform: uppercase; }
+        .btn-send { background: var(--accent); border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-next { width: 100%; padding: 20px; background: var(--danger); color: white; border: none; font-size: 1.2rem; font-weight: 900; cursor: pointer; }
 
-        /* Banner Inferior (Visible ahora con Scroll) */
-        .bottom-ad-bar { height: 50px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; font-weight: bold; flex-shrink: 0; }
+        /* Banners */
+        .bottom-ad-bar { height: 50px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; flex-shrink: 0; }
         .footer { height: 30px; background: #000; border-top: 1px solid #111; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #333; flex-shrink: 0; }
 
-        /* RESPONSIVE MÓVIL (Aquí arreglamos el scroll) */
+        /* Mobile Fix */
         @media (max-width: 800px) {
             .ad-sidebar { display: none; }
-            .main-wrapper { flex-direction: column; overflow-y: auto; }
-            .app-container { flex-direction: column; height: auto; overflow: visible; }
-            .video-column { width: 100%; height: 500px; } /* Altura fija para videos en móvil */
-            .chat-column { width: 100%; height: 400px; }  /* Altura fija para chat en móvil */
-            body { overflow-y: auto; }
+            .app-container { flex-direction: column; height: auto; }
+            .video-column { width: 100%; height: 60vh; }
+            .chat-column { width: 100%; height: 50vh; }
+            .main-wrapper { overflow-y: scroll; -webkit-overflow-scrolling: touch; }
         }
     </style>
 </head>
 <body>
 
     <header class="header"><div class="logo">ROULOTTE LIVE</div></header>
-    <div class="top-ad-bar">PUBLICIDAD SUPERIOR • ROULOTTE NETWORK 2026</div>
+    <div class="top-ad-bar">PUBLICIDAD SUPERIOR • ESPACIO DISPONIBLE</div>
 
     <div class="main-wrapper">
-        <aside class="ad-sidebar">ADS LATERAL</aside>
+        <aside class="ad-sidebar">ADS</aside>
         
         <div class="app-container">
             <section class="video-column">
                 <div class="v-box">
                     <video id="localVideo" autoplay muted playsinline></video>
-                    <div style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.7); padding:5px; font-size:10px; color:var(--accent);">TÚ</div>
+                    <div style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.7); padding:4px; font-size:9px; color:var(--accent);">TÚ (V8.7)</div>
                 </div>
                 <div class="v-box">
                     <video id="remoteVideo" autoplay playsinline></video>
-                    <div id="status-display" style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.7); padding:5px; font-size:10px; color:var(--accent);">SISTEMA: OK</div>
+                    <div id="status-display" style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.7); padding:4px; font-size:9px; color:var(--accent);">SISTEMA: OK</div>
                 </div>
             </section>
 
             <section class="chat-column">
                 <div id="chat-window">
-                    <div class="msg sys">Cargando cámara... Si no aparece, pulsa el botón de abajo.</div>
-                    <button id="retry-cam" onclick="startCamera()" style="background:var(--accent); color:black; padding:10px; border:none; font-weight:bold; border-radius:4px; margin:10px; cursor:pointer;">REINTENTAR CÁMARA</button>
+                    <div class="msg sys">Si la luz de la cámara está encendida pero no ves imagen, pulsa el botón de abajo.</div>
+                    <button id="retry-cam" onclick="startCamera()" style="background:var(--accent); color:black; padding:12px; border:none; font-weight:bold; border-radius:4px; margin:10px;">REINTENTAR CÁMARA</button>
                 </div>
                 <div class="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') sendMessage()">
+                    <input type="text" id="chat-input" placeholder="Chat..." onkeypress="if(event.key==='Enter') sendMessage()">
                     <button class="btn-send" onclick="sendMessage()">➤</button>
                 </div>
                 <button class="btn-next" onclick="nextPerson()">SIGUIENTE ➔</button>
             </section>
         </div>
 
-        <aside class="ad-sidebar">ADS LATERAL</aside>
+        <aside class="ad-sidebar">ADS</aside>
     </div>
 
-    <div class="bottom-ad-bar">PUBLICIDAD INFERIOR • ROULOTTE PREMIUM</div>
+    <div class="bottom-ad-bar">PUBLICIDAD INFERIOR • ROULOTTE PREMIUM 2026</div>
     <footer class="footer">ROULOTTE NETWORK &copy; 2026</footer>
 
 <script>
@@ -114,29 +106,40 @@
 
     let localStream, peer, myId, currentCall, dataConn;
 
-    // FUNCIÓN DE CÁMARA MEJORADA
     async function startCamera() {
         try {
-            // Pedimos primero solo video para mayor compatibilidad
+            // Solicitud de cámara con constraints simplificados
             const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: true, 
+                video: { facingMode: "user" }, 
                 audio: true 
             });
+            
             localStream = stream;
-            document.getElementById('localVideo').srcObject = stream;
+            const lv = document.getElementById('localVideo');
+            lv.srcObject = stream;
+            
+            // Forzado manual de reproducción (Vital para móviles)
+            lv.onloadedmetadata = () => {
+                lv.play().catch(e => console.log("Auto-play prevenido"));
+            };
+
             document.getElementById('retry-cam').style.display = 'none';
-            addMsg("Cámara conectada.", "sys");
-            if (!peer) initNetworking();
+            addMsg("Cámara activada correctamente.", "sys");
+            
+            if (!peer) initNet();
         } catch (err) {
             console.error(err);
-            addMsg("ERROR: Haz clic en el candado de la URL y activa la Cámara.", "sys");
+            addMsg("SISTEMA: No se puede ver la imagen. Revisa los permisos del navegador.", "sys");
         }
     }
 
-    function initNetworking() {
+    function initNet() {
         myId = 'rlt-' + Math.floor(Math.random() * 99999);
         peer = new Peer(myId);
-        peer.on('call', call => { call.answer(localStream); setupRemote(call); });
+        peer.on('call', call => { 
+            call.answer(localStream); 
+            setupRemote(call); 
+        });
         peer.on('connection', conn => {
             dataConn = conn;
             dataConn.on('data', d => addMsg(d, 'them'));
@@ -154,7 +157,7 @@
             await db.from('profiles').delete().eq('peer_id', pId);
             setupRemote(peer.call(pId, localStream));
             dataConn = peer.connect(pId);
-            dataConn.on('open', () => dataConn.on('data', d => addMsg(d, 'them')));
+            dataConn.on('data', d => addMsg(d, 'them'));
         } else {
             await db.from('profiles').insert([{ peer_id: myId }]);
             document.getElementById('status-display').innerText = "SISTEMA: ESPERANDO...";
@@ -164,7 +167,9 @@
     function setupRemote(call) {
         currentCall = call;
         call.on('stream', s => {
-            document.getElementById('remoteVideo').srcObject = s;
+            const rv = document.getElementById('remoteVideo');
+            rv.srcObject = s;
+            rv.play().catch(e => console.log("Remote play error"));
             document.getElementById('status-display').innerText = "SISTEMA: EN VIVO ✅";
         });
     }
@@ -187,8 +192,8 @@
         win.scrollTop = win.scrollHeight;
     }
 
-    // Inicio automático
-    startCamera();
+    // Inicio
+    window.onload = startCamera;
 </script>
 </body>
 </html>
