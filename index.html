@@ -27,7 +27,7 @@
                     <video id="me" autoplay muted playsinline></video>
                 </div>
                 <div class="video-box">
-                    <div id="status-tag" class="label">BUSCANDO PAREJA...</div>
+                    <div id="status-tag" class="label">REMOTO</div>
                     <video id="remote" autoplay playsinline></video>
                 </div>
             </section>
@@ -60,82 +60,73 @@
 
         let myStream, peer, myId, actualCall, dataConn;
 
-        async function iniciar() {
-            // Generamos ID único público
-            myId = 'pub-' + Math.random().toString(36).substr(2, 8);
+        async function init() {
+            myId = 'user-' + Math.random().toString(36).substr(2, 8);
             
             peer = new Peer(myId, {
-                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }, { 'urls': 'stun:stun1.l.google.com:19302' }] }
+                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
             });
 
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
-            } catch (e) {
-                alert("Debes permitir la cámara para usar Roulotte.");
+            } catch (e) { 
+                console.error("Cámara denegada"); 
             }
 
             peer.on('call', call => {
                 call.answer(myStream);
-                gestionarLlamada(call);
+                manejarStream(call);
             });
 
             peer.on('connection', conn => {
                 dataConn = conn;
-                setupChat();
+                dataConn.on('data', d => pintarMensaje("them", d));
             });
         }
 
         async function buscarPareja() {
             const btn = document.getElementById('btn-next');
-            btn.disabled = true;
             btn.innerText = "BUSCANDO...";
+            btn.disabled = true;
 
             if (actualCall) actualCall.close();
             if (dataConn) dataConn.close();
             document.getElementById('remote').srcObject = null;
 
-            // Lógica VIP aplicada a tabla pública: Intentar pescar un ID
-            const { data, error } = await supa
-                .from('profiles')
+            const { data } = await supa.from('profiles')
                 .select('peer_id')
+                .not('peer_id', 'is', null)
                 .neq('peer_id', myId)
                 .limit(1);
 
             if (data && data.length > 0) {
                 const targetId = data[0].peer_id;
-                
-                // Intentar borrarlo (si fallamos, es que alguien más lo pescó)
-                const { error: delError } = await supa.from('profiles').delete().eq('peer_id', targetId);
+                const { error } = await supa.from('profiles').delete().eq('peer_id', targetId);
 
-                if (!delError) {
-                    const call = peer.call(targetId, myStream);
-                    gestionarLlamada(call);
+                if (!error) {
+                    manejarStream(peer.call(targetId, myStream));
                     dataConn = peer.connect(targetId);
-                    setupChat();
+                    dataConn.on('open', () => {
+                        dataConn.on('data', d => pintarMensaje("them", d));
+                        btn.disabled = false;
+                        btn.innerText = "SIGUIENTE PERSONA ➔";
+                    });
                 } else {
-                    setTimeout(buscarPareja, 500); // Reintento rápido
+                    buscarPareja(); 
                 }
             } else {
-                // No hay nadie, me anuncio yo
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
-                btn.innerText = "ESPERANDO...";
-                setTimeout(() => btn.disabled = false, 2000);
+                btn.innerText = "ESPERANDO PAREJA...";
+                setTimeout(() => { btn.disabled = false; }, 2000);
             }
         }
 
-        function gestionarLlamada(call) {
+        function manejarStream(call) {
             actualCall = call;
-            call.on('stream', stream => {
-                document.getElementById('remote').srcObject = stream;
+            call.on('stream', s => {
+                document.getElementById('remote').srcObject = s;
                 document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
-                document.getElementById('btn-next').disabled = false;
-            });
-        }
-
-        function setupChat() {
-            dataConn.on('data', msg => pintarMensaje("them", msg));
-            dataConn.on('open', () => {
                 document.getElementById('btn-next').disabled = false;
             });
         }
@@ -150,15 +141,15 @@
         }
 
         function pintarMensaje(autor, texto) {
-            const box = document.getElementById('chat');
-            const div = document.createElement('div');
-            div.className = `msg ${autor}`;
-            div.innerText = texto;
-            box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
+            const chat = document.getElementById('chat');
+            const d = document.createElement('div');
+            d.className = `msg ${autor}`;
+            d.innerText = texto;
+            chat.appendChild(d);
+            chat.scrollTop = chat.scrollHeight;
         }
 
-        window.onload = iniciar;
+        window.onload = init;
     </script>
 </body>
 </html>
