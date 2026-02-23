@@ -33,13 +33,15 @@
             </section>
 
             <section class="chat-side">
-                <button class="btn-next" id="main-next" onclick="buscar()">SIGUIENTE ➔</button>
+                <button class="btn-next" onclick="buscar()">SIGUIENTE ➔</button>
                 
                 <div id="chat"></div>
                 
                 <div class="chat-controls">
-                    <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
-                    <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
+                    <div class="input-row">
+                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
+                    </div>
                 </div>
             </section>
         </div>
@@ -50,7 +52,7 @@
     <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD INFERIOR</div></div>
 
     <footer class="footer">
-        <p>&copy; 2026 Roulotte Network | <a href="#" style="color:#888; text-decoration:none;">Privacidad</a></p>
+        <p>&copy; 2026 Roulotte Network | <a href="#" style="color:#666; text-decoration:none;">Privacidad</a></p>
     </footer>
 
     <script>
@@ -68,7 +70,7 @@
                 peer = new Peer(myId);
                 peer.on('call', c => { c.answer(myStream); manejarStream(c); });
                 peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
-            } catch (e) { console.log("Permisos cámara requeridos"); }
+            } catch (e) { console.error("Error multimedia"); }
         }
 
         async function buscar() {
