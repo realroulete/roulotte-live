@@ -3,22 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live</title>
+    <title>Roulotte Live - Público</title>
     <link rel="stylesheet" href="publico.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
     <header class="header">
         <div class="logo">ROULOTTE PÚBLICO</div>
         <button class="btn-goto-vip" onclick="location.href='registrovip.html'">💎 ACCESO VIP</button>
     </header>
 
+    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD SUPERIOR</div></div>
+
     <main class="main-wrapper">
+        <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
+
         <div class="main-content-row">
             <section class="video-side">
-                <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
-                <div class="video-box"><div id="status-tag" class="label">REMOTO</div><video id="remote" autoplay playsinline></video></div>
+                <div class="video-box">
+                    <div class="label">TÚ</div>
+                    <video id="me" autoplay muted playsinline></video>
+                </div>
+                <div class="video-box">
+                    <div id="status-tag" class="label">BUSCANDO...</div>
+                    <video id="remote" autoplay playsinline></video>
+                </div>
             </section>
 
             <section class="chat-side">
@@ -26,17 +37,25 @@
                 <div id="chat"></div>
                 <div class="chat-controls">
                     <div class="input-wrapper">
-                        <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
                         <button class="btn-send-inner" onclick="enviarMensaje()">ENVIAR</button>
                     </div>
                 </div>
             </section>
         </div>
+
+        <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
     </main>
+
+    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD INFERIOR</div></div>
+
+    <footer class="footer">
+        <p>&copy; 2026 Roulotte Network</p>
+    </footer>
 
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE"; 
+        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
         let myStream, peer, myId, actualCall, dataConn;
 
@@ -46,7 +65,7 @@
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
-            } catch (e) { console.log("Permisos cámara"); }
+            } catch (e) { console.warn("Cámara no activa"); }
             peer.on('call', c => { c.answer(myStream); manejarStream(c); });
             peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
         }
@@ -65,12 +84,12 @@
                 dataConn = peer.connect(tid);
                 dataConn.on('open', () => {
                     dataConn.on('data', d => addMsg("them", d));
-                    btn.innerText = "CONECTADO ✓";
+                    btn.innerText = "SIGUIENTE PERSONA ➔";
                 });
                 manejarStream(peer.call(tid, myStream));
             } else {
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
-                btn.innerText = "ESPERANDO...";
+                btn.innerText = "ESPERANDO PAREJA...";
             }
         }
 
@@ -78,7 +97,7 @@
             actualCall = c;
             c.on('stream', s => { 
                 document.getElementById('remote').srcObject = s; 
-                document.getElementById('btn-next').innerText = "SIGUIENTE ➔";
+                document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
             });
         }
 
