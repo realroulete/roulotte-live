@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live - Fix</title>
+    <title>Roulotte Live - Reset</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -11,120 +11,108 @@
         * { box-sizing: border-box; font-family: sans-serif; }
         body { margin: 0; background: #000; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .header { height: 50px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); font-weight: bold; flex-shrink: 0; }
-        .ad-horizontal, .ad-footer { height: 50px; background: #050505; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); color: #333; font-size: 10px; flex-shrink: 0; }
-        .main-wrapper { display: flex; flex: 1; overflow: hidden; }
-        .ad-side { width: 100px; background: #050505; display: flex; align-items: center; justify-content: center; color: #333; border: 1px solid var(--border); font-size: 10px; flex-shrink: 0; }
-        .main-content-row { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; overflow: hidden; }
-        .video-side { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+        .main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; }
+        .video-side { display: flex; flex-direction: column; gap: 10px; flex: 1; }
         .video-box { flex: 1; background: #111; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
-        video { width: 100%; height: 100%; object-fit: cover; background: #000; }
-        .label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 3px 6px; border-radius: 4px; font-size: 10px; z-index: 5; }
-        .btn-next { width: 100%; padding: 18px; background: var(--red); color: #fff; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; flex-shrink: 0; }
-        .btn-next:disabled { background: #333; }
-        #status { font-size: 10px; color: #666; text-align: center; margin-top: 5px; }
-        @media (min-width: 850px) { .video-side { flex-direction: row; } .ad-side { width: 120px; } }
-        @media (max-width: 600px) { .ad-side { display: none; } }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .btn-next { width: 100%; padding: 20px; background: var(--red); color: #fff; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; }
+        #status { font-size: 12px; color: #ffcc00; text-align: center; background: #222; padding: 5px; border-radius: 5px; }
+        @media (min-width: 800px) { .video-side { flex-direction: row; } }
     </style>
 </head>
 <body>
     <header class="header">ROULOTTE LIVE</header>
-    <div class="ad-horizontal">BANNER SUP</div>
-    <main class="main-wrapper">
-        <aside class="ad-side">ADS</aside>
-        <section class="main-content-row">
-            <div class="video-side">
-                <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
-                <div class="video-box"><div class="label">REMOTO</div><video id="remote" autoplay playsinline></video></div>
-            </div>
-            <button class="btn-next" id="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
-            <div id="status">Iniciando...</div>
-        </section>
-        <aside class="ad-side">ADS</aside>
+    <main class="main-content">
+        <div id="status">ESTADO: Iniciando...</div>
+        <div class="video-side">
+            <div class="video-box"><video id="me" autoplay muted playsinline></video></div>
+            <div class="video-box"><video id="remote" autoplay playsinline></video></div>
+        </div>
+        <button class="btn-next" id="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
     </main>
-    <div class="ad-footer">BANNER INF</div>
 
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-        const peerConfig = {
-            config: {
-                'iceServers': [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
-                ],
-                'iceTransportPolicy': 'all'
-            }
-        };
-
-        let myId = 'u' + Math.floor(Math.random() * 99999);
+        let myId = 'user-' + Math.floor(Math.random() * 10000);
         let myStream, peer, actualCall;
 
         async function init() {
+            const status = document.getElementById('status');
             try {
-                myStream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 }, audio: true });
+                // 1. Probar Cámara
+                myStream = await navigator.mediaDevices.getUserMedia({ video: { width: 320 }, audio: true });
                 document.getElementById('me').srcObject = myStream;
-                peer = new Peer(myId, peerConfig);
-                
-                peer.on('open', async () => {
-                    document.getElementById('status').innerText = "ID: " + myId + " | LISTO";
-                    await supa.from('waiting_users').upsert([{ peer_id: myId }]);
+                status.innerText = "Cámara OK. Conectando a Peer...";
+
+                // 2. Probar PeerJS
+                peer = new Peer(myId, {
+                    config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }] }
+                });
+
+                peer.on('open', async (id) => {
+                    status.innerText = "Conectado a Peer. Registrando en Supabase...";
+                    
+                    // 3. Probar Supabase con reintento
+                    const { error } = await supa.from('waiting_users').upsert([{ peer_id: myId, created_at: new Date().toISOString() }]);
+                    
+                    if (error) {
+                        status.innerText = "ERROR SUPABASE: " + error.message;
+                        console.error(error);
+                    } else {
+                        status.innerText = "TODO LISTO. ID: " + id;
+                    }
                 });
 
                 peer.on('call', call => {
                     actualCall = call;
                     call.answer(myStream);
-                    call.on('stream', s => {
-                        document.getElementById('remote').srcObject = s;
-                        document.getElementById('btn-next').disabled = false;
-                        document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
-                    });
+                    call.on('stream', s => document.getElementById('remote').srcObject = s);
                 });
-            } catch (e) { document.getElementById('status').innerText = "ERROR CÁMARA"; }
+
+            } catch (e) {
+                status.innerText = "ERROR INICIAL: " + e.message;
+            }
         }
 
         async function buscar() {
+            const status = document.getElementById('status');
             const btn = document.getElementById('btn-next');
-            btn.disabled = true; btn.innerText = "CONECTANDO...";
-            
-            // 1. LIMPIAR MI VIDEO ANTERIOR
-            document.getElementById('remote').srcObject = null;
-            if(actualCall) actualCall.close();
+            btn.disabled = true;
+            status.innerText = "Buscando pareja activa...";
 
-            // 2. BORRAR REGISTROS FANTASMAS (Más de 20 segundos)
-            const hace20s = new Date(Date.now() - 20000).toISOString();
-            await supa.from('waiting_users').delete().lt('created_at', hace20s);
+            // Limpieza de gente vieja
+            const hace10s = new Date(Date.now() - 10000).toISOString();
+            await supa.from('waiting_users').delete().lt('created_at', hace10s);
 
-            // 3. BUSCAR PAREJA
-            const { data } = await supa.from('waiting_users')
-                .select('peer_id')
-                .neq('peer_id', myId)
-                .limit(1);
+            // Intentar encontrar a alguien
+            const { data, error } = await supa.from('waiting_users').select('peer_id').neq('peer_id', myId).limit(1);
 
             if (data && data.length > 0) {
                 const target = data[0].peer_id;
-                // Borrar al objetivo para que nadie más lo llame
+                status.innerText = "Llamando a " + target;
+                
+                // Borrarlo para "pescarlo"
                 await supa.from('waiting_users').delete().eq('peer_id', target);
                 
                 const call = peer.call(target, myStream);
                 actualCall = call;
                 call.on('stream', s => {
                     document.getElementById('remote').srcObject = s;
+                    status.innerText = "EN LÍNEA";
                     btn.disabled = false;
-                    btn.innerText = "SIGUIENTE PERSONA ➔";
                 });
                 
-                // Si falla en 5 segundos, reintentar automáticamente
-                setTimeout(() => { if(!document.getElementById('remote').srcObject) buscar(); }, 5000);
+                setTimeout(() => { if(!document.getElementById('remote').srcObject) { btn.disabled = false; buscar(); } }, 5000);
             } else {
-                // Si no hay nadie, me registro y espero
                 await supa.from('waiting_users').upsert([{ peer_id: myId, created_at: new Date().toISOString() }]);
-                document.getElementById('status').innerText = "Nadie online. Esperando...";
-                setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PERSONA ➔"; }, 3000);
+                status.innerText = "Nadie disponible. Esperando...";
+                setTimeout(() => { btn.disabled = false; }, 2000);
             }
         }
+
         window.onload = init;
     </script>
 </body>
