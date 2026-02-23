@@ -4,63 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Roulotte Live Pro</title>
+    <link rel="stylesheet" href="publico.css">
+    
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <style>
-        :root { --red: #ff3b30; --border: #222; --bg: #000; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        
-        /* Evitar scroll horizontal siempre */
-        html, body { background: var(--bg); color: #fff; width: 100%; overflow-x: hidden; }
-        body { min-height: 100vh; display: flex; flex-direction: column; }
-
-        .header { height: 45px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .banner-h { height: 50px; background: #050505; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; }
-
-        /* Contenedor Principal */
-        .main-wrapper { display: flex; flex: 1; width: 100%; }
-        
-        .banner-v { width: 80px; background: #050505; border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; writing-mode: vertical-rl; flex-shrink: 0; }
-        .banner-v.right { border-right: none; border-left: 1px solid var(--border); }
-
-        .content { flex: 1; display: flex; padding: 15px; gap: 15px; min-width: 0; }
-
-        /* Videos */
-        .video-side { width: 450px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
-        .v-box { flex: 1; background: #111; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; min-height: 250px; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        
-        .controls { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
-        .c-btn { background: rgba(0,0,0,0.7); border: 1px solid #444; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-        /* Chat e Interacción */
-        .interaction-side { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-        .chat-container { flex: 1; background: #0a0a0a; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; min-height: 300px; }
-        .chat-msgs { flex: 1; padding: 15px; font-size: 13px; color: #ccc; overflow-y: auto; }
-        
-        .chat-input-area { padding: 10px; border-top: 1px solid var(--border); display: flex; gap: 5px; }
-        .chat-input-area input { flex: 1; background: #111; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; min-width: 0; }
-        .btn-send { background: var(--red); border: none; color: white; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        .btn-next { width: 100%; padding: 20px; background: var(--red); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; }
-
-        /* Footer y Banner Inferior Separados */
-        .banner-footer { height: 50px; background: #050505; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; }
-        .final-footer { height: 30px; background: #000; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #666; border-top: 1px solid #111; }
-
-        /* Responsive Móvil */
-        @media (max-width: 850px) {
-            .main-wrapper { flex-direction: column; }
-            .banner-v { display: none; }
-            .content { flex-direction: column; padding: 10px; }
-            .video-side { width: 100%; }
-            /* Botón arriba del chat */
-            .btn-next { order: 1; }
-            .chat-container { order: 2; height: 350px; }
-            .v-box { height: 260px; flex: none; }
-        }
-    </style>
 </head>
 <body>
 
@@ -68,11 +16,12 @@
     <div class="banner-h">PUBLICIDAD SUPERIOR</div>
 
     <div class="main-wrapper">
-        <div class="banner-v">PUBLICIDAD LATERAL</div>
+        <div class="banner-v">PUBLICIDAD</div>
         
-        <div class="content">
-            <div class="video-side">
+        <main class="content">
+            <section class="video-side">
                 <div class="v-box">
+                    <span class="label">Tú</span>
                     <video id="me" autoplay muted playsinline></video>
                     <div class="controls">
                         <button class="c-btn" onclick="toggleMic()">🎤</button>
@@ -81,31 +30,32 @@
                     </div>
                 </div>
                 <div class="v-box">
+                    <span class="label">Pareja</span>
                     <video id="remote" autoplay playsinline></video>
                     <div class="controls">
                         <button class="c-btn" onclick="togglePiP()">📺</button>
                         <button class="c-btn" onclick="toggleFull()">⛶</button>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="interaction-side">
+            <section class="interaction-side">
                 <div class="chat-container">
-                    <div class="chat-msgs" id="chat"><div>Bienvenido. Pulsa abajo para buscar.</div></div>
+                    <div class="chat-msgs" id="chat"><div>Bienvenido. Haz clic en siguiente para buscar pareja.</div></div>
                     <div class="chat-input-area">
-                        <input type="text" id="input-chat" placeholder="Chat..." onkeypress="if(event.key==='Enter') sendMessage()">
+                        <input type="text" id="input-chat" placeholder="Escribe..." onkeypress="if(event.key==='Enter') sendMessage()">
                         <button class="btn-send" onclick="sendMessage()">ENVIAR</button>
                     </div>
                 </div>
                 <button id="btn-next" class="btn-next" onclick="buscar()">SIGUIENTE PAREJA ➔</button>
-            </div>
-        </div>
+            </section>
+        </main>
 
-        <div class="banner-v right">PUBLICIDAD LATERAL</div>
+        <div class="banner-v right">PUBLICIDAD</div>
     </div>
 
     <div class="banner-footer">PUBLICIDAD INFERIOR</div>
-    <footer class="final-footer">© 2026 ROULOTTE LIVE - TODOS LOS DERECHOS RESERVADOS</footer>
+    <footer class="final-footer">© 2026 ROULOTTE LIVE - PIE DE PÁGINA</footer>
 
     <script>
         const firebaseConfig = {
@@ -120,14 +70,14 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const myId = 'u-' + Math.floor(Math.random() * 999999);
-        let myStream, peer, actualCall, dataConn;
+        let myStream, peer, actualCall, dataConn, currentFacing = "user";
 
         async function init() {
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
                 startPeer();
-            } catch (e) { alert("Activa la cámara"); }
+            } catch (e) { alert("Cámara no detectada."); }
         }
 
         function startPeer() {
@@ -145,7 +95,9 @@
             peer.on('connection', conn => {
                 dataConn = conn;
                 dataConn.on('data', data => {
-                    document.getElementById('chat').innerHTML += `<div style="color:red">Pareja: ${data}</div>`;
+                    const cb = document.getElementById('chat');
+                    cb.innerHTML += `<div style="color:red"><b>Pareja:</b> ${data}</div>`;
+                    cb.scrollTop = cb.scrollHeight;
                 });
             });
         }
@@ -159,7 +111,6 @@
 
             db.ref('online_users/' + myId).update({ status: 'searching' });
 
-            // Lógica de emparejamiento mejorada
             db.ref('online_users').once('value', snapshot => {
                 const users = snapshot.val();
                 let found = false;
@@ -167,19 +118,16 @@
                     const targets = Object.values(users).filter(u => u.id !== myId && u.status === 'searching');
                     if(targets.length > 0) {
                         const target = targets[0];
-                        // Sincronización: El ID más bajo llama
-                        if(myId < target.id) {
-                            actualCall = peer.call(target.id, myStream);
-                            dataConn = peer.connect(target.id);
-                            actualCall.on('stream', s => { 
-                                document.getElementById('remote').srcObject = s; 
-                                db.ref('online_users/' + myId).update({ status: 'busy' });
-                            });
-                        }
+                        actualCall = peer.call(target.id, myStream);
+                        dataConn = peer.connect(target.id);
+                        actualCall.on('stream', s => { 
+                            document.getElementById('remote').srcObject = s; 
+                            db.ref('online_users/' + myId).update({ status: 'busy' });
+                        });
                         found = true;
                     }
                 }
-                setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔"; }, 4000);
+                setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔"; }, 3000);
             });
         }
 
@@ -187,17 +135,27 @@
             const input = document.getElementById('input-chat');
             if(dataConn && input.value) {
                 dataConn.send(input.value);
-                document.getElementById('chat').innerHTML += `<div>Tú: ${input.value}</div>`;
+                const cb = document.getElementById('chat');
+                cb.innerHTML += `<div><b>Tú:</b> ${input.value}</div>`;
                 input.value = '';
+                cb.scrollTop = cb.scrollHeight;
             }
         }
 
-        // Controles de video
         function toggleMic(){ myStream.getAudioTracks()[0].enabled = !myStream.getAudioTracks()[0].enabled; }
         function toggleCam(){ myStream.getVideoTracks()[0].enabled = !myStream.getVideoTracks()[0].enabled; }
-        function flipCam(){ /* Lógica de cambio de cámara */ }
+        function flipCam(){ 
+            currentFacing = currentFacing === "user" ? "environment" : "user";
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing } }).then(s => {
+                const videoTrack = s.getVideoTracks()[0];
+                if(actualCall) actualCall.peerConnection.getSenders().find(send => send.track.kind === 'video').replaceTrack(videoTrack);
+                myStream.removeTrack(myStream.getVideoTracks()[0]);
+                myStream.addTrack(videoTrack);
+                document.getElementById('me').srcObject = myStream;
+            });
+        }
         function togglePiP(){ document.getElementById('remote').requestPictureInPicture(); }
-        function toggleFull(){ document.querySelector('.video-side').requestFullscreen(); }
+        function toggleFull(){ document.getElementById('remote').parentElement.requestFullscreen(); }
 
         window.onload = init;
     </script>
