@@ -63,11 +63,11 @@
         async function init() {
             myId = 'pub-' + Math.random().toString(36).substr(2, 7);
             
-            // Configuración PeerJS con servidores STUN para conectar cámaras tras firewalls
             peer = new Peer(myId, {
                 config: { 'iceServers': [
                     { 'urls': 'stun:stun.l.google.com:19302' },
-                    { 'urls': 'stun:stun1.l.google.com:19302' }
+                    { 'urls': 'stun:stun1.l.google.com:19302' },
+                    { 'urls': 'stun:stun2.l.google.com:19302' }
                 ]}
             });
 
@@ -86,38 +86,47 @@
             peer.on('connection', conn => {
                 dataConn = conn;
                 dataConn.on('data', d => addMsg("them", d));
+                dataConn.on('open', () => document.getElementById('btn-next').innerText = "CONECTADO ✓");
             });
         }
 
         async function buscar() {
             const btn = document.getElementById('btn-next');
             btn.innerText = "BUSCANDO...";
+            btn.disabled = true;
             
             if(actualCall) actualCall.close();
             if(dataConn) dataConn.close();
             document.getElementById('remote').srcObject = null;
 
-            // Buscamos a alguien esperando en Supabase
-            const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
+            // 1. Buscamos a alguien disponible
+            const { data, error } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
 
             if (data && data.length > 0) {
-                const tid = data[0].peer_id;
-                await supa.from('profiles').delete().eq('peer_id', tid);
+                const targetId = data[0].peer_id;
                 
-                // Conectamos video
-                const call = peer.call(tid, myStream);
-                manejarStream(call);
-
-                // Conectamos chat
-                dataConn = peer.connect(tid);
-                dataConn.on('open', () => {
-                    dataConn.on('data', d => addMsg("them", d));
-                    btn.innerText = "CONECTADO ✓";
-                });
+                // 2. Intentamos "atrapar" a esa persona borrándola
+                const { error: delError } = await supa.from('profiles').delete().eq('peer_id', targetId);
+                
+                // Si no hay error al borrar, significa que "ganamos" el emparejamiento
+                if (!delError) {
+                    dataConn = peer.connect(targetId);
+                    dataConn.on('open', () => {
+                        dataConn.on('data', d => addMsg("them", d));
+                        btn.innerText = "SIGUIENTE PERSONA ➔";
+                        btn.disabled = false;
+                    });
+                    manejarStream(peer.call(targetId, myStream));
+                } else {
+                    // Si falló (alguien se adelantó), esperamos un poco y reintentamos
+                    setTimeout(buscar, 500);
+                }
             } else {
-                // Si no hay nadie, nos apuntamos nosotros
+                // 3. Si no hay nadie, nos ponemos en cola
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
                 btn.innerText = "ESPERANDO...";
+                // Permitimos reintentar tras 3 segundos por si acaso
+                setTimeout(() => { btn.disabled = false; }, 3000);
             }
         }
 
@@ -126,12 +135,17 @@
             call.on('stream', s => { 
                 document.getElementById('remote').srcObject = s; 
                 document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
+                document.getElementById('btn-next').disabled = false;
+            });
+            // Si la llamada falla o se cierra
+            call.on('close', () => {
+                document.getElementById('remote').srcObject = null;
             });
         }
 
         function enviarMensaje() {
             const i = document.getElementById('chat-input');
-            if (i.value && dataConn) { 
+            if (i.value && dataConn && dataConn.open) { 
                 dataConn.send(i.value); 
                 addMsg("me", i.value); 
                 i.value = ""; 
