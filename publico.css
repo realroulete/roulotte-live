@@ -40,31 +40,34 @@ video { width: 100%; height: 100%; object-fit: cover; }
 .msg.me { background: #007aff; margin-left: auto; }
 .msg.them { background: #262629; }
 
-/* ÁREA DE CONTROL: Input y Enviar en línea */
-.chat-controls { display: flex; flex-direction: column; gap: 12px; width: 100%; }
-.input-row { display: flex; gap: 10px; width: 100%; }
+/* ÁREA DE CONTROL: Input con botón dentro */
+.chat-controls { width: 100%; }
+.input-wrapper { position: relative; width: 100%; display: flex; align-items: center; }
 
 #chat-input { 
-    flex: 1; padding: 15px; border-radius: 10px; border: 1px solid var(--border); 
+    width: 100%; padding: 18px 90px 18px 18px; /* 90px de padding derecho para el botón */
+    border-radius: 12px; border: 1px solid var(--border); 
     background: #1a1a1a; color: white; font-size: 16px; outline: none;
 }
 
-.btn-send { 
-    background: #333; border: none; color: white; padding: 0 20px; 
-    border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s;
+/* El botón ROJO dentro del input */
+.btn-send-inner { 
+    position: absolute; right: 8px; 
+    background: var(--red); color: white; border: none; 
+    padding: 10px 15px; border-radius: 8px; font-weight: bold; 
+    font-size: 12px; cursor: pointer; transition: 0.2s;
 }
-.btn-send:hover { background: #444; }
+.btn-send-inner:hover { opacity: 0.9; transform: scale(1.05); }
 
-/* BOTÓN SIGUIENTE (Comportamiento dinámico) */
+/* BOTÓN SIGUIENTE */
 .btn-next { 
     width: 100%; padding: 20px; background: var(--red); color: white; 
     border: none; border-radius: 15px; font-weight: 900; font-size: 1.3rem; 
-    cursor: pointer;
-    order: 3; /* En PC aparece al final (bajo el chat) */
+    cursor: pointer; order: 3;
 }
 
 /* Footer */
-.footer { background: #000; padding: 25px; text-align: center; color: #444; font-size: 12px; border-top: 1px solid var(--border); }
+.footer { background: #000; padding: 25px; text-align: center; width: 100%; color: #444; font-size: 12px; border-top: 1px solid var(--border); }
 
 /* RESPONSIVE MÓVIL */
 @media (max-width: 800px) {
@@ -74,14 +77,12 @@ video { width: 100%; height: 100%; object-fit: cover; }
     .video-side { padding: 10px; }
     .video-box { aspect-ratio: 1 / 1; flex: none; width: 100%; }
     
-    /* MOVER BOTÓN SIGUIENTE ARRIBA SOLO EN MÓVIL */
+    /* Mover Siguiente ARRIBA */
     .btn-next { order: -1; margin-bottom: 5px; padding: 18px; }
     
     .chat-side { padding: 10px; }
     #chat { min-height: 300px; }
-    
-    /* Aseguramos que el input y enviar sigan en línea en móvil */
-    .input-row { display: flex; }
-    #chat-input { padding: 12px; font-size: 14px; }
-    .btn-send { padding: 0 15px; font-size: 13px; }
+
+    #chat-input { padding: 15px 85px 15px 15px; font-size: 14px; }
+    .btn-send-inner { padding: 8px 12px; right: 6px; }
 }
