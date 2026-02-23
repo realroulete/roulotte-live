@@ -1,6 +1,6 @@
 :root {
     --bg: #0a0a0a;
-    --accent: #3498db; /* Azul para la sala pública */
+    --accent-red: #e74c3c;
     --card: #151515;
     --text: #ffffff;
 }
@@ -9,10 +9,11 @@ body {
     margin: 0; 
     background: var(--bg); 
     color: var(--text); 
-    font-family: -apple-system, system-ui, sans-serif; 
-    min-height: 100vh;
+    font-family: sans-serif; 
+    height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Evita el scroll general en PC */
 }
 
 .header { 
@@ -35,51 +36,77 @@ body {
     cursor: pointer;
 }
 
-.main-wrapper { display: flex; flex: 1; }
+/* Contenedor Principal Lado a Lado */
+.main-wrapper { 
+    display: flex; 
+    flex: 1; 
+    height: calc(100vh - 60px);
+}
 
+/* Banners Laterales */
 .ad-side {
-    width: 140px;
-    background: #0d0d0d;
+    width: 160px;
+    background: #050505;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #333;
-    font-size: 10px;
+    border: 1px solid #111;
 }
 
+.ad-placeholder {
+    color: #333;
+    font-size: 12px;
+    transform: rotate(-90deg);
+    letter-spacing: 5px;
+}
+
+/* Contenido Central */
 .main-content-row { 
     display: flex; 
     flex: 1; 
-    max-width: 1200px;
+    gap: 15px;
+    padding: 15px;
+    max-width: 1400px;
     margin: 0 auto;
-    width: 100%;
 }
 
-/* Lado Videos */
-.video-side { flex: 1.6; padding: 10px; }
-.video-container { display: flex; flex-direction: column; gap: 10px; }
+/* LADO IZQUIERDO: VIDEOS */
+.video-side { 
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .video-box { 
+    flex: 1;
     position: relative; 
     background: #000; 
     border-radius: 12px; 
     overflow: hidden; 
     border: 1px solid #333;
-    aspect-ratio: 4/3; 
 }
 video { width: 100%; height: 100%; object-fit: cover; }
 
-/* Lado Chat */
+.label { 
+    position: absolute; top: 10px; left: 10px; 
+    background: rgba(0,0,0,0.6); padding: 4px 8px; 
+    border-radius: 4px; font-size: 11px; z-index: 10;
+}
+
+/* LADO DERECHO: CHAT */
 .chat-side { 
     flex: 1; 
-    padding: 10px; 
     display: flex; 
     flex-direction: column; 
     background: #0c0c0c;
-    border-left: 1px solid #222;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 15px;
 }
 
 #chat { 
-    height: 350px; 
+    flex: 1; 
     overflow-y: auto; 
     background: var(--card);
     padding: 10px;
@@ -87,25 +114,33 @@ video { width: 100%; height: 100%; object-fit: cover; }
     margin-bottom: 10px;
 }
 
-.msg { margin-bottom: 8px; padding: 10px; border-radius: 8px; font-size: 14px; }
-.msg.me { background: #333; margin-left: auto; text-align: right; }
+.msg { margin-bottom: 8px; padding: 10px; border-radius: 8px; font-size: 14px; max-width: 80%; }
+.msg.me { background: #333; margin-left: auto; }
 .msg.them { background: #444; }
+
+/* CONTROLES Y BOTÓN ROJO */
+.input-container { display: flex; gap: 5px; margin-bottom: 10px; }
+input { flex: 1; padding: 12px; border-radius: 8px; border: none; background: #222; color: white; outline: none; }
+.btn-send { background: #333; border: none; color: white; padding: 0 15px; border-radius: 8px; cursor: pointer; }
 
 .btn-next { 
     width: 100%; 
-    padding: 18px; 
-    background: var(--accent); 
+    padding: 20px; 
+    background: var(--accent-red); 
     color: white;
     border: none; 
     border-radius: 12px; 
     font-weight: bold; 
-    font-size: 1.1rem; 
+    font-size: 1.2rem; 
     cursor: pointer;
-    margin-top: auto;
 }
 
+/* RESPONSIVE PARA MÓVILES (Aquí sí se pone uno bajo el otro) */
 @media (max-width: 900px) {
+    body { overflow-y: auto; height: auto; }
+    .main-wrapper { flex-direction: column; height: auto; }
     .ad-side { display: none; }
     .main-content-row { flex-direction: column; }
-    .video-box { aspect-ratio: 16/9; }
+    .video-side { height: 600px; }
+    .chat-side { height: 500px; }
 }
