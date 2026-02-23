@@ -6,100 +6,65 @@
     <title>Roulotte Live</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <style>
         :root { --red: #ff3b30; --border: #222; }
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        * { box-sizing: border-box; font-family: sans-serif; }
         
-        /* Habilitar scroll en el cuerpo para móviles */
         body { 
-            margin: 0; 
-            background: #000; 
-            color: #fff; 
-            overflow-y: auto; 
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            margin: 0; background: #000; color: #fff; 
+            height: 100vh; display: flex; flex-direction: column; 
+            overflow: hidden; /* Evita doble scroll */
         }
 
-        .header { 
-            height: 60px; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            border-bottom: 1px solid var(--border); 
-            background: #000;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            font-weight: bold;
-            letter-spacing: 1px;
+        .header { height: 50px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; font-weight: bold; }
+
+        /* Contenedor principal con scroll solo en móvil */
+        .main-wrapper { 
+            display: flex; flex: 1; overflow-y: auto; 
         }
 
-        .main-content { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            padding: 15px; 
-            gap: 15px;
-            /* Asegura que haya suficiente espacio para hacer scroll */
-            min-height: calc(100vh - 60px); 
+        .ad-side { 
+            width: 120px; background: #050505; 
+            display: flex; align-items: center; justify-content: center; 
+            border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+            color: #333; font-size: 12px; flex-shrink: 0;
         }
 
-        .video-grid { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
+        .main-content-row { 
+            flex: 1; display: flex; flex-direction: column; padding: 15px; gap: 15px; 
+            max-width: 1000px; margin: 0 auto; width: 100%;
         }
 
-        .video-box { 
-            width: 100%;
-            aspect-ratio: 4/3; 
-            background: #111; 
-            border-radius: 12px; 
-            border: 1px solid var(--border); 
-            position: relative; 
-            overflow: hidden; 
-        }
-
-        video { width: 100%; height: 100%; object-fit: cover; background: #000; }
+        .video-side { display: flex; flex-direction: column; gap: 10px; flex: 1; }
         
-        .label { 
-            position: absolute; 
-            top: 10px; 
-            left: 10px; 
-            background: rgba(0,0,0,0.6); 
-            padding: 4px 10px; 
-            border-radius: 6px; 
-            font-size: 11px; 
-            z-index: 10;
-            text-transform: uppercase;
+        .video-box { 
+            flex: 1; min-height: 250px; background: #111; 
+            border-radius: 12px; border: 1px solid var(--border); 
+            position: relative; overflow: hidden; 
         }
+        
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 5px; font-size: 11px; z-index: 5; }
 
         .btn-next { 
-            width: 100%; 
-            padding: 20px; 
-            background: var(--red); 
-            color: #fff; 
-            border: none; 
-            border-radius: 15px; 
-            font-weight: bold; 
-            font-size: 18px; 
-            cursor: pointer; 
-            margin-top: 10px;
-            margin-bottom: 40px; /* Margen inferior para que no choque con el borde */
-            flex-shrink: 0;
-            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+            width: 100%; padding: 20px; background: var(--red); color: #fff; 
+            border: none; border-radius: 12px; font-weight: bold; 
+            font-size: 18px; cursor: pointer; flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.2);
+        }
+        .btn-next:disabled { background: #333; opacity: 0.7; }
+
+        /* AJUSTES PARA PC */
+        @media (min-width: 850px) {
+            .video-side { flex-direction: row; }
+            .main-wrapper { overflow: hidden; } /* Fijo en PC */
+            .btn-next { font-size: 22px; padding: 25px; }
         }
 
-        .btn-next:active { transform: scale(0.98); }
-        .btn-next:disabled { background: #333; box-shadow: none; opacity: 0.6; }
-
-        /* Ajuste para PC / Tablets */
-        @media (min-width: 850px) { 
-            .video-grid { flex-direction: row; } 
-            .video-box { aspect-ratio: 16/9; }
-            body { overflow: hidden; } /* Bloquear scroll en PC */
+        /* OCULTAR ADS EN MÓVIL PARA GANAR ESPACIO */
+        @media (max-width: 600px) {
+            .ad-side { display: none; }
+            .main-content-row { padding: 10px; }
         }
     </style>
 </head>
@@ -107,87 +72,77 @@
 
     <header class="header">ROULOTTE LIVE</header>
 
-    <main class="main-content">
-        <div class="video-grid">
-            <div class="video-box">
-                <div class="label">TÚ</div>
-                <video id="me" autoplay muted playsinline></video>
+    <main class="main-wrapper">
+        <aside class="ad-side">ADS</aside>
+
+        <section class="main-content-row">
+            <div class="video-side">
+                <div class="video-box">
+                    <div class="label">TÚ</div>
+                    <video id="me" autoplay muted playsinline></video>
+                </div>
+                <div class="video-box">
+                    <div class="label">REMOTO</div>
+                    <video id="remote" autoplay playsinline></video>
+                </div>
             </div>
-            <div class="video-box">
-                <div class="label">REMOTO</div>
-                <video id="remote" autoplay playsinline></video>
-            </div>
-        </div>
-        
-        <button class="btn-next" id="btn-next" onclick="buscarPareja()">SIGUIENTE PERSONA ➔</button>
-        
-        <div style="height: 40px;"></div>
+            
+            <button class="btn-next" id="btn-next" onclick="buscarPareja()">SIGUIENTE PERSONA ➔</button>
+        </section>
+
+        <aside class="ad-side">ADS</aside>
     </main>
 
     <script>
-        // Configuración de Supabase
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
         let myStream, peer, myId, actualCall;
 
-        // Iniciar cámara y conexión
         async function init() {
             myId = 'u-' + Math.random().toString(36).substr(2, 6);
             peer = new Peer(myId);
 
             try {
-                // Resolución optimizada para móviles
                 myStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { width: 480, height: 360 }, 
                     audio: true 
                 });
                 document.getElementById('me').srcObject = myStream;
             } catch (e) {
-                alert("Por favor, permite el acceso a la cámara.");
+                console.warn("Permiso de cámara denegado");
             }
 
-            // Recibir llamada
             peer.on('call', call => {
                 call.answer(myStream);
                 manejarStream(call);
             });
         }
 
-        // Lógica de búsqueda
         async function buscarPareja() {
             const btn = document.getElementById('btn-next');
             btn.innerText = "BUSCANDO...";
             btn.disabled = true;
 
-            // Limpieza rastro tabla waiting_users
             await supa.from('waiting_users').delete().eq('peer_id', myId);
             if (actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
 
-            // 1. Intentar pescar a alguien esperando
-            const { data } = await supa.from('waiting_users')
-                .select('peer_id')
-                .neq('peer_id', myId)
-                .limit(1);
+            const { data } = await supa.from('waiting_users').select('peer_id').neq('peer_id', myId).limit(1);
 
             if (data && data.length > 0) {
                 const targetId = data[0].peer_id;
-                
-                // 2. Intentar borrar para confirmar emparejamiento
                 const { error } = await supa.from('waiting_users').delete().eq('peer_id', targetId);
 
                 if (!error) {
                     manejarStream(peer.call(targetId, myStream));
                 } else {
-                    buscarPareja(); // Si alguien nos ganó, reintentamos
+                    buscarPareja();
                 }
             } else {
-                // 3. No hay nadie, nos anotamos nosotros
                 await supa.from('waiting_users').insert([{ peer_id: myId }]);
                 btn.innerText = "ESPERANDO...";
-                // Permitir reintento tras unos segundos
                 setTimeout(() => { 
                     btn.disabled = false; 
                     btn.innerText = "SIGUIENTE PERSONA ➔"; 
@@ -195,20 +150,14 @@
             }
         }
 
-        // Mostrar video del otro
         function manejarStream(call) {
             actualCall = call;
             call.on('stream', s => {
                 const rVideo = document.getElementById('remote');
                 rVideo.srcObject = s;
                 rVideo.play().catch(() => {});
-                
                 document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
                 document.getElementById('btn-next').disabled = false;
-            });
-            
-            call.on('close', () => {
-                document.getElementById('remote').srcObject = null;
             });
         }
 
