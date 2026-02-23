@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live Pro</title>
+    <title>Roulotte Live Pro - Global Connect</title>
     <link rel="stylesheet" href="publico.css">
     
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -12,11 +12,11 @@
 </head>
 <body>
 
-    <div class="header">ROULOTTE LIVE</div>
+    <header class="header">ROULOTTE LIVE</header>
     <div class="banner-h">PUBLICIDAD SUPERIOR</div>
 
     <div class="main-wrapper">
-        <div class="banner-v">PUBLICIDAD</div>
+        <aside class="banner-v">PUBLICIDAD LATERAL</aside>
         
         <main class="content">
             <section class="video-side">
@@ -24,26 +24,26 @@
                     <span class="label">Tú</span>
                     <video id="me" autoplay muted playsinline></video>
                     <div class="controls">
-                        <button class="c-btn" onclick="toggleMic()">🎤</button>
-                        <button class="c-btn" onclick="toggleCam()">📷</button>
-                        <button class="c-btn" onclick="flipCam()">🔄</button>
+                        <button class="c-btn" title="Micro" onclick="toggleMic()">🎤</button>
+                        <button class="c-btn" title="Cámara" onclick="toggleCam()">📷</button>
+                        <button class="c-btn" title="Girar" onclick="flipCam()">🔄</button>
                     </div>
                 </div>
                 <div class="v-box">
                     <span class="label">Pareja</span>
                     <video id="remote" autoplay playsinline></video>
                     <div class="controls">
-                        <button class="c-btn" onclick="togglePiP()">📺</button>
-                        <button class="c-btn" onclick="toggleFull()">⛶</button>
+                        <button class="c-btn" title="PiP" onclick="togglePiP()">📺</button>
+                        <button class="c-btn" title="Pantalla Completa" onclick="toggleFull()">⛶</button>
                     </div>
                 </div>
             </section>
 
             <section class="interaction-side">
                 <div class="chat-container">
-                    <div class="chat-msgs" id="chat"><div>Bienvenido. Haz clic en siguiente para buscar pareja.</div></div>
+                    <div class="chat-msgs" id="chat"><div>Bienvenido. Haz clic en "Siguiente" para buscar.</div></div>
                     <div class="chat-input-area">
-                        <input type="text" id="input-chat" placeholder="Escribe..." onkeypress="if(event.key==='Enter') sendMessage()">
+                        <input type="text" id="input-chat" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') sendMessage()">
                         <button class="btn-send" onclick="sendMessage()">ENVIAR</button>
                     </div>
                 </div>
@@ -51,13 +51,14 @@
             </section>
         </main>
 
-        <div class="banner-v right">PUBLICIDAD</div>
+        <aside class="banner-v right">PUBLICIDAD LATERAL</aside>
     </div>
 
     <div class="banner-footer">PUBLICIDAD INFERIOR</div>
     <footer class="final-footer">© 2026 ROULOTTE LIVE - PIE DE PÁGINA</footer>
 
     <script>
+        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCa28DKSvgiHVtDJu2cRhGgH8FUR_9aZfQ",
             authDomain: "roulottelive.firebaseapp.com",
@@ -70,92 +71,169 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const myId = 'u-' + Math.floor(Math.random() * 999999);
+        
         let myStream, peer, actualCall, dataConn, currentFacing = "user";
 
+        // 1. Inicializar cámara y PeerJS
         async function init() {
             try {
-                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                myStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
+                    audio: true 
+                });
                 document.getElementById('me').srcObject = myStream;
                 startPeer();
-            } catch (e) { alert("Cámara no detectada."); }
+            } catch (e) {
+                alert("Error: Por favor permite el acceso a la cámara y micrófono.");
+            }
         }
 
+        // 2. Configuración de Peer con servidores ICE para Redes Globales (STUN/TURN)
         function startPeer() {
-            peer = new Peer(myId);
-            peer.on('open', () => {
-                db.ref('online_users/' + myId).set({ id: myId, status: 'idle' });
+            const peerConfig = {
+                config: {
+                    'iceServers': [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { 
+                            urls: 'turn:openrelay.metered.ca:443', 
+                            username: 'openrelayproject', 
+                            credential: 'openrelayproject' 
+                        }
+                    ],
+                    'sdpSemantics': 'unified-plan'
+                }
+            };
+
+            peer = new Peer(myId, peerConfig);
+
+            peer.on('open', (id) => {
+                db.ref('online_users/' + myId).set({ id: myId, status: 'idle', ts: Date.now() });
                 db.ref('online_users/' + myId).onDisconnect().remove();
             });
+
+            // Recibir llamada de video
             peer.on('call', call => {
                 actualCall = call;
                 call.answer(myStream);
-                call.on('stream', s => { document.getElementById('remote').srcObject = s; });
-                db.ref('online_users/' + myId).update({ status: 'busy' });
-            });
-            peer.on('connection', conn => {
-                dataConn = conn;
-                dataConn.on('data', data => {
-                    const cb = document.getElementById('chat');
-                    cb.innerHTML += `<div style="color:red"><b>Pareja:</b> ${data}</div>`;
-                    cb.scrollTop = cb.scrollHeight;
+                call.on('stream', s => { 
+                    document.getElementById('remote').srcObject = s; 
+                    db.ref('online_users/' + myId).update({ status: 'busy' });
+                    document.getElementById('chat').innerHTML = "<div>¡Pareja conectada!</div>";
                 });
             });
+
+            // Recibir conexión de datos (Chat)
+            peer.on('connection', conn => {
+                dataConn = conn;
+                setupDataEvents();
+            });
+
+            peer.on('error', err => console.error("PeerJS Error:", err));
         }
 
+        // 3. Lógica de búsqueda y emparejamiento
         function buscar() {
             const btn = document.getElementById('btn-next');
-            btn.disabled = true; btn.innerText = "BUSCANDO...";
+            btn.disabled = true;
+            btn.innerText = "BUSCANDO...";
+            
+            // Limpieza
             document.getElementById('remote').srcObject = null;
-            document.getElementById('chat').innerHTML = "<div>Buscando...</div>";
             if(actualCall) actualCall.close();
+            if(dataConn) dataConn.close();
 
-            db.ref('online_users/' + myId).update({ status: 'searching' });
+            db.ref('online_users/' + myId).update({ status: 'searching', ts: Date.now() });
 
             db.ref('online_users').once('value', snapshot => {
                 const users = snapshot.val();
                 let found = false;
-                if(users) {
-                    const targets = Object.values(users).filter(u => u.id !== myId && u.status === 'searching');
-                    if(targets.length > 0) {
-                        const target = targets[0];
+
+                if (users) {
+                    // Filtrar usuarios buscando (que no sea yo)
+                    const candidates = Object.values(users).filter(u => u.id !== myId && u.status === 'searching');
+                    
+                    if (candidates.length > 0) {
+                        // El que lleva más tiempo esperando tiene prioridad
+                        const target = candidates.sort((a,b) => a.ts - b.ts)[0];
+                        
+                        // Sincronización agresiva
                         actualCall = peer.call(target.id, myStream);
                         dataConn = peer.connect(target.id);
-                        actualCall.on('stream', s => { 
-                            document.getElementById('remote').srcObject = s; 
+                        
+                        actualCall.on('stream', s => {
+                            document.getElementById('remote').srcObject = s;
                             db.ref('online_users/' + myId).update({ status: 'busy' });
+                            document.getElementById('chat').innerHTML = "<div>¡Pareja encontrada!</div>";
                         });
+                        setupDataEvents();
                         found = true;
                     }
                 }
-                setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔"; }, 3000);
+
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerText = "SIGUIENTE PAREJA ➔";
+                }, 3000);
+            });
+        }
+
+        // 4. Lógica del Chat
+        function setupDataEvents() {
+            dataConn.on('data', data => {
+                const cb = document.getElementById('chat');
+                cb.innerHTML += `<div style="color:var(--red)"><b>Pareja:</b> ${data}</div>`;
+                cb.scrollTop = cb.scrollHeight;
             });
         }
 
         function sendMessage() {
             const input = document.getElementById('input-chat');
-            if(dataConn && input.value) {
+            const chatBox = document.getElementById('chat');
+            if(dataConn && dataConn.open && input.value) {
                 dataConn.send(input.value);
-                const cb = document.getElementById('chat');
-                cb.innerHTML += `<div><b>Tú:</b> ${input.value}</div>`;
+                chatBox.innerHTML += `<div><b>Tú:</b> ${input.value}</div>`;
                 input.value = '';
-                cb.scrollTop = cb.scrollHeight;
+                chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
 
-        function toggleMic(){ myStream.getAudioTracks()[0].enabled = !myStream.getAudioTracks()[0].enabled; }
-        function toggleCam(){ myStream.getVideoTracks()[0].enabled = !myStream.getVideoTracks()[0].enabled; }
-        function flipCam(){ 
-            currentFacing = currentFacing === "user" ? "environment" : "user";
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing } }).then(s => {
-                const videoTrack = s.getVideoTracks()[0];
-                if(actualCall) actualCall.peerConnection.getSenders().find(send => send.track.kind === 'video').replaceTrack(videoTrack);
-                myStream.removeTrack(myStream.getVideoTracks()[0]);
-                myStream.addTrack(videoTrack);
-                document.getElementById('me').srcObject = myStream;
-            });
+        // 5. Funciones de Control de Video/Audio
+        function toggleMic() {
+            const audioTrack = myStream.getAudioTracks()[0];
+            audioTrack.enabled = !audioTrack.enabled;
         }
-        function togglePiP(){ document.getElementById('remote').requestPictureInPicture(); }
-        function toggleFull(){ document.getElementById('remote').parentElement.requestFullscreen(); }
+
+        function toggleCam() {
+            const videoTrack = myStream.getVideoTracks()[0];
+            videoTrack.enabled = !videoTrack.enabled;
+        }
+
+        function flipCam() {
+            currentFacing = (currentFacing === "user") ? "environment" : "user";
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing } })
+                .then(newStream => {
+                    const videoTrack = newStream.getVideoTracks()[0];
+                    if (actualCall) {
+                        const sender = actualCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
+                        sender.replaceTrack(videoTrack);
+                    }
+                    myStream.removeTrack(myStream.getVideoTracks()[0]);
+                    myStream.addTrack(videoTrack);
+                    document.getElementById('me').srcObject = myStream;
+                });
+        }
+
+        function togglePiP() {
+            if (document.pictureInPictureElement) document.exitPictureInPicture();
+            else document.getElementById('remote').requestPictureInPicture();
+        }
+
+        function toggleFull() {
+            const elem = document.getElementById('remote');
+            if (elem.requestFullscreen) elem.requestFullscreen();
+            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        }
 
         window.onload = init;
     </script>
