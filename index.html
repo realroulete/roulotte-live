@@ -2,68 +2,103 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roulotte - Sala Pública</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Roulotte Live - Público</title>
+    <link rel="stylesheet" href="publico.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
     <header class="header">
         <div class="logo">ROULOTTE PÚBLICO</div>
         <button class="btn-goto-vip" onclick="location.href='registrovip.html'">💎 ACCESO VIP</button>
     </header>
 
     <main class="main-wrapper">
+        <aside class="ad-side">ADS</aside>
+
         <div class="main-content-row">
             <section class="video-side">
                 <div class="video-container">
-                    <div class="video-box"><video id="me" autoplay muted playsinline></video></div>
-                    <div class="video-box"><video id="remote" autoplay playsinline></video></div>
+                    <div class="video-box">
+                        <div class="label">TÚ</div>
+                        <video id="me" autoplay muted playsinline></video>
+                    </div>
+                    <div class="video-box">
+                        <div id="status-tag" class="label">BUSCANDO...</div>
+                        <video id="remote" autoplay playsinline></video>
+                    </div>
                 </div>
             </section>
+
             <section class="chat-side">
                 <div id="chat"></div>
                 <div class="chat-controls">
-                    <input type="text" id="chat-input" placeholder="Escribe...">
+                    <div class="input-container">
+                        <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <button class="btn-send" onclick="enviarMensaje()">➤</button>
+                    </div>
                     <button class="btn-next" onclick="buscar()">SIGUIENTE ➔</button>
                 </div>
             </section>
         </div>
+
+        <aside class="ad-side">ADS</aside>
     </main>
 
     <script>
-        const supa = supabase.createClient("https://bojafgtowhtxujsjgqnq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE");
+        const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
+        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
+        const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
         let myStream, peer, myId, actualCall, dataConn;
 
         async function init() {
-            myStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-            document.getElementById('me').srcObject = myStream;
-            myId = 'pub-' + Math.random().toString(36).substr(2,7);
-            peer = new Peer(myId);
-            peer.on('call', c => { c.answer(myStream); manejarStream(c); });
-            peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
+            try {
+                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('me').srcObject = myStream;
+                myId = 'pub-' + Math.random().toString(36).substr(2, 7);
+                peer = new Peer(myId);
+                peer.on('call', c => { c.answer(myStream); manejarStream(c); });
+                peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
+            } catch (e) { alert("Error cámara"); }
         }
 
         async function buscar() {
             if(actualCall) actualCall.close();
+            document.getElementById('remote').srcObject = null;
             const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
             if (data && data.length > 0) {
                 const tid = data[0].peer_id;
                 await supa.from('profiles').delete().eq('peer_id', tid);
                 dataConn = peer.connect(tid);
+                dataConn.on('data', d => addMsg("them", d));
                 manejarStream(peer.call(tid, myStream));
             } else {
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
             }
         }
 
-        function manejarStream(c) { 
-            actualCall = c; 
-            c.on('stream', s => document.getElementById('remote').srcObject = s); 
+        function manejarStream(c) {
+            actualCall = c;
+            c.on('stream', s => { document.getElementById('remote').srcObject = s; });
         }
-        
-        function addMsg(t, x) { /* ... lógica de chat ... */ }
+
+        function enviarMensaje() {
+            const i = document.getElementById('chat-input');
+            if (i.value && dataConn) { dataConn.send(i.value); addMsg("me", i.value); i.value = ""; }
+        }
+
+        function addMsg(t, x) {
+            const c = document.getElementById('chat');
+            const div = document.createElement('div');
+            div.className = `msg ${t}`;
+            div.innerText = x;
+            c.appendChild(div);
+            c.scrollTop = c.scrollHeight;
+        }
+
         window.onload = init;
     </script>
 </body>
