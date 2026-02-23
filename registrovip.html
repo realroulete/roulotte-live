@@ -2,41 +2,148 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso VIP</title>
-    <link rel="stylesheet" href="publico.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Roulotte Live - VIP GOLD</title>
+    <link rel="stylesheet" href="vip.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body style="display:flex; justify-content:center; align-items:center; height:100vh; background:#000;">
-    <div style="background:#111; padding:30px; border-radius:15px; border:1px solid #333; width:300px; text-align:center;">
-        <h2 style="color:#f1c40f;">ROULOTTE VIP</h2>
-        <div id="auth-box">
-            <input type="email" id="email" placeholder="Email" style="width:100%; padding:10px; margin-bottom:10px; background:#222; border:1px solid #444; color:white;">
-            <input type="password" id="pass" placeholder="Contraseña" style="width:100%; padding:10px; margin-bottom:10px; background:#222; border:1px solid #444; color:white;">
-            <button onclick="login()" style="width:100%; padding:15px; background:#f1c40f; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">ENTRAR</button>
-            <p onclick="registrar()" style="color:#666; font-size:12px; margin-top:15px; cursor:pointer;">¿Eres nuevo? Solicitar registro</p>
+<body>
+
+    <header class="header">
+        <div class="logo">ROULOTTE <span class="gold-text">VIP GOLD</span></div>
+        <button class="btn-exit" onclick="location.href='index.html'">VOLVER AL PÚBLICO</button>
+    </header>
+
+    <div class="ad-horizontal"><div class="ad-placeholder">SALA EXCLUSIVA PARA MIEMBROS GOLD</div></div>
+
+    <main class="main-wrapper">
+        <aside class="ad-side"><div class="ad-placeholder-vert">VIP ADS</div></aside>
+
+        <div class="main-content-row">
+            <section class="video-side">
+                <div class="video-box gold-border">
+                    <div class="label gold-bg">TÚ (VIP)</div>
+                    <video id="me" autoplay muted playsinline></video>
+                </div>
+                <div class="video-box gold-border">
+                    <div id="status-tag" class="label gold-bg">BUSCANDO SOCIO...</div>
+                    <video id="remote" autoplay playsinline></video>
+                </div>
+            </section>
+
+            <section class="chat-side">
+                <button class="btn-next-gold" id="btn-buscar" onclick="buscar()">PRÓXIMO VIP ➔</button>
+                
+                <div id="chat" class="gold-scroll">
+                    <div class="msg them">Bienvenido a la Sala VIP. Aquí solo conectas con usuarios verificados.</div>
+                </div>
+                
+                <div class="chat-controls">
+                    <div class="input-wrapper">
+                        <input type="text" id="chat-input" placeholder="Escribe un mensaje VIP..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <button class="btn-send-inner-gold" onclick="enviarMensaje()">ENVIAR</button>
+                    </div>
+                </div>
+            </section>
         </div>
-    </div>
+
+        <aside class="ad-side"><div class="ad-placeholder-vert">VIP ADS</div></aside>
+    </main>
+
+    <div class="ad-horizontal"><div class="ad-placeholder">SALA EXCLUSIVA PARA MIEMBROS GOLD</div></div>
+
+    <footer class="footer">
+        <p>&copy; 2026 Roulotte VIP | <span class="gold-text">SOPORTE PREMIUM 24/7</span></p>
+    </footer>
 
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-        async function login() {
-            const { data, error } = await supa.auth.signInWithPassword({
-                email: document.getElementById('email').value,
-                password: document.getElementById('pass').value
-            });
-            if (error) alert("Error de acceso"); else location.href = "salavip.html";
+        let myStream, peer, myId, actualCall, dataConn;
+
+        async function init() {
+            try {
+                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('me').srcObject = myStream;
+                // Identificador VIP único
+                myId = 'vip-' + Math.random().toString(36).substr(2, 7);
+                peer = new Peer(myId);
+                
+                peer.on('call', c => { 
+                    c.answer(myStream); 
+                    manejarStream(c); 
+                });
+                
+                peer.on('connection', c => { 
+                    dataConn = c; 
+                    c.on('data', d => addMsg("them", d)); 
+                });
+
+                console.log("VIP Ready con ID:", myId);
+            } catch (e) {
+                alert("Para acceder a la Sala VIP debes permitir la cámara.");
+            }
         }
 
-        async function registrar() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('pass').value;
-            const { error } = await supa.from('verification_requests').insert([{ email, password, username: 'Nuevo Aspirante' }]);
-            if (error) alert("Error al enviar solicitud"); else alert("Solicitud enviada al admin.");
+        async function buscar() {
+            const btn = document.getElementById('btn-buscar');
+            btn.innerText = "BUSCANDO...";
+            btn.style.opacity = "0.7";
+
+            if(actualCall) actualCall.close();
+            document.getElementById('remote').srcObject = null;
+
+            // Buscamos en una tabla diferente 'profiles_vip' para no mezclar con usuarios gratis
+            const { data } = await supa.from('profiles_vip').select('peer_id').neq('peer_id', myId).limit(1);
+            
+            if (data && data.length > 0) {
+                const tid = data[0].peer_id;
+                await supa.from('profiles_vip').delete().eq('peer_id', tid);
+                dataConn = peer.connect(tid);
+                dataConn.on('data', d => addMsg("them", d));
+                manejarStream(peer.call(tid, myStream));
+                btn.innerText = "PRÓXIMO VIP ➔";
+                btn.style.opacity = "1";
+            } else {
+                await supa.from('profiles_vip').upsert([{ peer_id: myId }]);
+                setTimeout(() => {
+                    if(!document.getElementById('remote').srcObject) {
+                        btn.innerText = "ESPERANDO SOCIO...";
+                    }
+                }, 2000);
+            }
         }
+
+        function manejarStream(c) {
+            actualCall = c;
+            c.on('stream', s => { 
+                document.getElementById('remote').srcObject = s; 
+                document.getElementById('btn-buscar').innerText = "PRÓXIMO VIP ➔";
+            });
+        }
+
+        function enviarMensaje() {
+            const i = document.getElementById('chat-input');
+            if (i.value && dataConn) { 
+                dataConn.send(i.value); 
+                addMsg("me", i.value); 
+                i.value = ""; 
+            }
+        }
+
+        function addMsg(t, x) {
+            const c = document.getElementById('chat');
+            const div = document.createElement('div');
+            div.className = `msg ${t}`;
+            div.innerText = x;
+            c.appendChild(div);
+            c.scrollTop = c.scrollHeight;
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
