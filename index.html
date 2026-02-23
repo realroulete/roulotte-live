@@ -3,123 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live - Estable</title>
+    <title>Roulotte Live</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --red: #ff3b30; --border: #222; }
-        * { box-sizing: border-box; font-family: sans-serif; }
-        body { margin: 0; background: #000; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .header { height: 50px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); font-weight: bold; flex-shrink: 0; }
-        .ad-horizontal, .ad-footer { height: 50px; background: #050505; display: flex; align-items: center; justify-content: center; color: #333; font-size: 10px; flex-shrink: 0; border: 1px solid var(--border); }
-        .main-wrapper { display: flex; flex: 1; overflow: hidden; }
-        .ad-side { width: 100px; background: #050505; display: flex; align-items: center; justify-content: center; color: #333; font-size: 10px; flex-shrink: 0; }
-        .main-content-row { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; overflow: hidden; }
-        .video-side { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
-        .video-box { flex: 1; background: #111; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
-        video { width: 100%; height: 100%; object-fit: cover; background: #000; }
-        .label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 3px 6px; border-radius: 4px; font-size: 10px; z-index: 5; }
-        .btn-next { width: 100%; padding: 18px; background: var(--red); color: #fff; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; flex-shrink: 0; }
-        .btn-next:disabled { background: #333; opacity: 0.7; }
-        @media (min-width: 850px) { .video-side { flex-direction: row; } .ad-side { width: 120px; } }
-        @media (max-width: 600px) { .ad-side { display: none; } }
+        body { margin:0; background:#000; color:#fff; font-family:sans-serif; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+        .header { height:50px; display:flex; align-items:center; justify-content:center; border-bottom:1px solid var(--border); font-weight:bold; letter-spacing:1px; }
+        .main { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+        .v-grid { flex:1; display:flex; flex-direction:column; gap:10px; }
+        .v-box { flex:1; background:#111; border-radius:12px; border:1px solid var(--border); overflow:hidden; position:relative; }
+        video { width:100%; height:100%; object-fit:cover; background:#000; }
+        .btn-next { width:100%; padding:20px; background:var(--red); color:#fff; border:none; border-radius:15px; font-weight:bold; font-size:18px; cursor:pointer; }
+        .btn-next:disabled { background:#333; opacity:0.6; }
+        #status { font-size:10px; color:#666; text-align:center; padding:5px; }
+        @media (min-width: 800px) { .v-grid { flex-direction:row; } }
     </style>
 </head>
 <body>
-
-    <header class="header">ROULOTTE LIVE</header>
-    <div class="ad-horizontal">PUBLICIDAD SUPERIOR</div>
-
-    <main class="main-wrapper">
-        <aside class="ad-side">ADS</aside>
-        <section class="main-content-row">
-            <div class="video-side">
-                <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
-                <div class="video-box"><div class="label">REMOTO</div><video id="remote" autoplay playsinline></video></div>
-            </div>
-            <button class="btn-next" id="btn-next" onclick="buscarPareja()">SIGUIENTE PERSONA ➔</button>
-        </section>
-        <aside class="ad-side">ADS</aside>
-    </main>
-
-    <div class="ad-footer">PUBLICIDAD INFERIOR</div>
+    <div class="header">ROULOTTE LIVE</div>
+    <div class="main">
+        <div class="v-grid">
+            <div class="v-box"><video id="me" autoplay muted playsinline></video></div>
+            <div class="v-box"><video id="remote" autoplay playsinline></video></div>
+        </div>
+        <button id="btn-next" class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
+        <div id="status">Cargando cámara...</div>
+    </div>
 
     <script>
-        const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
-        const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
-
-        let myStream, peer, myId, actualCall;
+        const supa = supabase.createClient("https://bojafgtowhtxujsjgqnq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE");
+        
+        let myId = 'p' + Math.floor(Math.random()*10000), myStream, peer, actualCall;
 
         async function init() {
-            myId = 'u-' + Math.random().toString(36).substr(2, 6);
-            
-            // Configuración ICE ultra-compatible
-            peer = new Peer(myId, {
-                config: {
-                    'iceServers': [
+            try {
+                myStream = await navigator.mediaDevices.getUserMedia({ video: {width:320, height:240}, audio: true });
+                document.getElementById('me').srcObject = myStream;
+                
+                // Configuración con múltiples servidores de Google para saltar bloqueos de router
+                peer = new Peer(myId, {
+                    config: {'iceServers': [
                         { urls: 'stun:stun.l.google.com:19302' },
                         { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' },
-                        { urls: 'stun:stun3.l.google.com:19302' },
-                        { urls: 'stun:stun4.l.google.com:19302' }
-                    ],
-                    'sdpSemantics': 'unified-plan'
-                }
-            });
-
-            try {
-                // Calidad reducida para asegurar fluidez (Lento = Desconexión)
-                myStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 320, height: 240, frameRate: 15 }, 
-                    audio: true 
+                        { urls: 'stun:stun2.l.google.com:19302' }
+                    ]}
                 });
-                document.getElementById('me').srcObject = myStream;
-            } catch (e) { console.error("Cámara error"); }
 
-            peer.on('call', call => {
-                call.answer(myStream);
-                manejarStream(call);
-            });
-        }
+                peer.on('open', id => {
+                    document.getElementById('status').innerText = "CONECTADO: " + id;
+                });
 
-        async function buscarPareja() {
-            const btn = document.getElementById('btn-next');
-            btn.innerText = "CONECTANDO...";
-            btn.disabled = true;
-
-            if (actualCall) actualCall.close();
-            document.getElementById('remote').srcObject = null;
-            await supa.from('waiting_users').delete().eq('peer_id', myId);
-
-            const { data } = await supa.from('waiting_users').select('peer_id').neq('peer_id', myId).limit(1);
-
-            if (data && data.length > 0) {
-                const targetId = data[0].peer_id;
-                const { error } = await supa.from('waiting_users').delete().eq('peer_id', targetId);
-
-                if (!error) {
-                    const call = peer.call(targetId, myStream);
-                    manejarStream(call);
-                } else { buscarPareja(); }
-            } else {
-                await supa.from('waiting_users').upsert([{ peer_id: myId }]);
-                btn.innerText = "ESPERANDO...";
-                setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PERSONA ➔"; }, 3000);
+                peer.on('call', call => {
+                    actualCall = call;
+                    call.answer(myStream);
+                    call.on('stream', s => {
+                        document.getElementById('remote').srcObject = s;
+                        document.getElementById('status').innerText = "VIDEO RECIBIDO";
+                    });
+                });
+            } catch (e) { 
+                document.getElementById('status').innerText = "ERROR CÁMARA";
             }
         }
 
-        function manejarStream(call) {
-            actualCall = call;
-            call.on('stream', s => {
-                const rVideo = document.getElementById('remote');
-                rVideo.srcObject = s;
-                rVideo.play().catch(()=>{});
-                document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
-                document.getElementById('btn-next').disabled = false;
-            });
-            // Si después de 8 segundos no hay video, liberar botón
-            setTimeout(() => { if(actualCall) document.getElementById('btn-next').disabled = false; }, 8000);
+        async function buscar() {
+            const btn = document.getElementById('btn-next');
+            btn.disabled = true;
+            btn.innerText = "BUSCANDO...";
+            document.getElementById('remote').srcObject = null;
+            if(actualCall) actualCall.close();
+
+            // 1. Ver si hay alguien esperando
+            const { data } = await supa.from('waiting_users').select('peer_id').neq('peer_id', myId).limit(1);
+
+            if (data && data.length > 0) {
+                const partnerId = data[0].peer_id;
+                // Intentar borrarlo para quedarme con la llamada
+                const { error } = await supa.from('waiting_users').delete().eq('peer_id', partnerId);
+                
+                if (!error) {
+                    document.getElementById('status').innerText = "LLAMANDO A: " + partnerId;
+                    const call = peer.call(partnerId, myStream);
+                    actualCall = call;
+                    call.on('stream', s => {
+                        document.getElementById('remote').srcObject = s;
+                        btn.disabled = false; btn.innerText = "SIGUIENTE PERSONA ➔";
+                    });
+                } else { buscar(); }
+            } else {
+                // 2. Si no hay nadie, me registro
+                await supa.from('waiting_users').upsert([{ peer_id: myId }]);
+                document.getElementById('status').innerText = "ESPERANDO EN LISTA...";
+                setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PERSONA ➔"; }, 3000);
+            }
         }
 
         window.onload = init;
