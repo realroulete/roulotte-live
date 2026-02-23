@@ -9,88 +9,77 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
     <header class="header">
         <div class="logo">ROULOTTE PÚBLICO</div>
         <button class="btn-goto-vip" onclick="location.href='registrovip.html'">💎 ACCESO VIP</button>
     </header>
 
-    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD SUPERIOR</div></div>
-
     <main class="main-wrapper">
-        <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
-
         <div class="main-content-row">
             <section class="video-side">
-                <div class="video-box">
-                    <div class="label">TÚ</div>
-                    <video id="me" autoplay muted playsinline></video>
-                </div>
-                <div class="video-box">
-                    <div id="status-tag" class="label">BUSCANDO...</div>
-                    <video id="remote" autoplay playsinline></video>
-                </div>
+                <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
+                <div class="video-box"><div id="status-tag" class="label">REMOTO</div><video id="remote" autoplay playsinline></video></div>
             </section>
 
             <section class="chat-side">
-                <button class="btn-next" onclick="buscar()">SIGUIENTE ➔</button>
-                
+                <button class="btn-next" id="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
                 <div id="chat"></div>
-                
                 <div class="chat-controls">
-                    <div class="input-row">
-                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
-                        <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
+                    <div class="input-wrapper">
+                        <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <button class="btn-send-inner" onclick="enviarMensaje()">ENVIAR</button>
                     </div>
                 </div>
             </section>
         </div>
-
-        <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
     </main>
-
-    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD INFERIOR</div></div>
-
-    <footer class="footer">
-        <p>&copy; 2026 Roulotte Network | <a href="#" style="color:#666; text-decoration:none;">Privacidad</a></p>
-    </footer>
 
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
+        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE"; 
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
-
         let myStream, peer, myId, actualCall, dataConn;
 
         async function init() {
+            myId = 'pub-' + Math.random().toString(36).substr(2, 7);
+            peer = new Peer(myId, { debug: 1 });
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
-                myId = 'pub-' + Math.random().toString(36).substr(2, 7);
-                peer = new Peer(myId);
-                peer.on('call', c => { c.answer(myStream); manejarStream(c); });
-                peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
-            } catch (e) { console.error("Error multimedia"); }
+            } catch (e) { console.log("Permisos cámara"); }
+            peer.on('call', c => { c.answer(myStream); manejarStream(c); });
+            peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
         }
 
         async function buscar() {
+            const btn = document.getElementById('btn-next');
+            btn.innerText = "BUSCANDO...";
             if(actualCall) actualCall.close();
+            if(dataConn) dataConn.close();
             document.getElementById('remote').srcObject = null;
+
             const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
             if (data && data.length > 0) {
                 const tid = data[0].peer_id;
                 await supa.from('profiles').delete().eq('peer_id', tid);
                 dataConn = peer.connect(tid);
-                dataConn.on('data', d => addMsg("them", d));
+                dataConn.on('open', () => {
+                    dataConn.on('data', d => addMsg("them", d));
+                    btn.innerText = "CONECTADO ✓";
+                });
                 manejarStream(peer.call(tid, myStream));
             } else {
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
+                btn.innerText = "ESPERANDO...";
             }
         }
 
         function manejarStream(c) {
             actualCall = c;
-            c.on('stream', s => { document.getElementById('remote').srcObject = s; });
+            c.on('stream', s => { 
+                document.getElementById('remote').srcObject = s; 
+                document.getElementById('btn-next').innerText = "SIGUIENTE ➔";
+            });
         }
 
         function enviarMensaje() {
@@ -100,13 +89,10 @@
 
         function addMsg(t, x) {
             const c = document.getElementById('chat');
-            const div = document.createElement('div');
-            div.className = `msg ${t}`;
-            div.innerText = x;
-            c.appendChild(div);
-            c.scrollTop = c.scrollHeight;
+            const d = document.createElement('div');
+            d.className = `msg ${t}`; d.innerText = x;
+            c.appendChild(d); c.scrollTop = c.scrollHeight;
         }
-
         window.onload = init;
     </script>
 </body>
