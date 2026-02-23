@@ -36,9 +36,9 @@
                 <button class="btn-next" onclick="buscar()">SIGUIENTE ➔</button>
                 <div id="chat"></div>
                 <div class="chat-controls">
-                    <div class="input-row">
-                        <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') enviarMensaje()">
-                        <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
+                    <div class="input-wrapper">
+                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <button class="btn-send-inner" onclick="enviarMensaje()">ENVIAR</button>
                     </div>
                 </div>
             </section>
@@ -47,10 +47,8 @@
         <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
     </main>
 
-    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD INFERIOR</div></div>
-
     <footer class="footer">
-        <p>&copy; 2026 Roulotte Network | <a href="#" style="color:#666; text-decoration:none;">Privacidad</a></p>
+        <p>&copy; 2026 Roulotte Network</p>
     </footer>
 
     <script>
