@@ -15,10 +15,12 @@
         <button class="btn-goto-vip" onclick="location.href='registrovip.html'">💎 ACCESO VIP</button>
     </header>
 
+    <div class="ad-horizontal">
+        <div class="ad-placeholder">PUBLICIDAD SUPERIOR</div>
+    </div>
+
     <main class="main-wrapper">
-        <aside class="ad-side left-ad">
-            <div class="ad-placeholder">PUBLICIDAD</div>
-        </aside>
+        <aside class="ad-side left-ad"><div class="ad-placeholder-vert">PUBLICIDAD</div></aside>
 
         <div class="main-content-row">
             <section class="video-side">
@@ -27,7 +29,7 @@
                     <video id="me" autoplay muted playsinline></video>
                 </div>
                 <div class="video-box">
-                    <div id="status-tag" class="label">ESPERANDO...</div>
+                    <div id="status-tag" class="label">BUSCANDO...</div>
                     <video id="remote" autoplay playsinline></video>
                 </div>
             </section>
@@ -36,7 +38,7 @@
                 <div id="chat"></div>
                 <div class="chat-controls">
                     <div class="input-container">
-                        <input type="text" id="chat-input" placeholder="Escribe aquí..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') enviarMensaje()">
                         <button class="btn-send" onclick="enviarMensaje()">➤</button>
                     </div>
                     <button class="btn-next" onclick="buscar()">SIGUIENTE ➔</button>
@@ -44,10 +46,16 @@
             </section>
         </div>
 
-        <aside class="ad-side right-ad">
-            <div class="ad-placeholder">PUBLICIDAD</div>
-        </aside>
+        <aside class="ad-side right-ad"><div class="ad-placeholder-vert">PUBLICIDAD</div></aside>
     </main>
+
+    <div class="ad-horizontal">
+        <div class="ad-placeholder">PUBLICIDAD INFERIOR</div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2026 Roulotte Network | <a href="#">Términos</a></p>
+    </footer>
 
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
@@ -63,11 +71,8 @@
                 myId = 'pub-' + Math.random().toString(36).substr(2, 7);
                 peer = new Peer(myId);
                 peer.on('call', c => { c.answer(myStream); manejarStream(c); });
-                peer.on('connection', c => { 
-                    dataConn = c; 
-                    c.on('data', d => addMsg("them", d)); 
-                });
-            } catch (e) { console.error("Error cámara:", e); }
+                peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
+            } catch (e) { alert("Acceso a cámara denegado o no disponible."); }
         }
 
         async function buscar() {
@@ -92,11 +97,7 @@
 
         function enviarMensaje() {
             const i = document.getElementById('chat-input');
-            if (i.value && dataConn) { 
-                dataConn.send(i.value); 
-                addMsg("me", i.value); 
-                i.value = ""; 
-            }
+            if (i.value && dataConn) { dataConn.send(i.value); addMsg("me", i.value); i.value = ""; }
         }
 
         function addMsg(t, x) {
