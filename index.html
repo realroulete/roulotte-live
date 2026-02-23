@@ -15,43 +15,29 @@
         <button class="btn-goto-vip" onclick="location.href='registrovip.html'">💎 ACCESO VIP</button>
     </header>
 
-    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD SUPERIOR</div></div>
-
     <main class="main-wrapper">
         <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
 
         <div class="main-content-row">
             <section class="video-side">
-                <div class="video-box">
-                    <div class="label">TÚ</div>
-                    <video id="me" autoplay muted playsinline></video>
-                </div>
-                <div class="video-box">
-                    <div id="status-tag" class="label">BUSCANDO...</div>
-                    <video id="remote" autoplay playsinline></video>
-                </div>
+                <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
+                <div class="video-box"><div id="status-tag" class="label">BUSCANDO...</div><video id="remote" autoplay playsinline></video></div>
             </section>
 
-            <section class="chat-side" id="chat-section">
-                <button class="btn-next" id="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
-                
+            <section class="chat-side">
                 <div id="chat"></div>
-                
                 <div class="chat-controls">
                     <div class="input-wrapper">
                         <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') enviarMensaje()">
                         <button class="btn-send-inner" onclick="enviarMensaje()">ENVIAR</button>
                     </div>
                 </div>
+                <button class="btn-next" id="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
             </section>
         </div>
 
         <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
     </main>
-
-    <footer class="footer">
-        <p>&copy; 2026 Roulotte Network</p>
-    </footer>
 
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
@@ -60,59 +46,57 @@
         let myStream, peer, myId, actualCall, dataConn;
 
         async function init() {
+            myId = 'pub-' + Math.random().toString(36).substr(2, 7);
+            peer = new Peer(myId, { debug: 1 });
+            
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
-                myId = 'pub-' + Math.random().toString(36).substr(2, 7);
-                peer = new Peer(myId);
-                
-                peer.on('call', c => { 
-                    c.answer(myStream); 
-                    manejarStream(c); 
-                });
-                
-                peer.on('connection', c => { 
-                    dataConn = c; 
-                    c.on('data', d => addMsg("them", d)); 
-                });
-            } catch (e) { alert("Acceso a cámara necesario"); }
+            } catch (e) { console.error("Cámara no disponible"); }
+
+            peer.on('call', c => { 
+                c.answer(myStream); 
+                manejarStream(c); 
+            });
+            peer.on('connection', c => { 
+                dataConn = c; 
+                c.on('data', d => addMsg("them", d)); 
+            });
         }
 
         async function buscar() {
             const btn = document.getElementById('btn-next');
-            btn.innerText = "BUSCANDO...";
-            btn.disabled = true;
-
-            // Limpieza total antes de nueva búsqueda
+            btn.innerText = "CONECTANDO...";
+            
             if(actualCall) actualCall.close();
             if(dataConn) dataConn.close();
             document.getElementById('remote').srcObject = null;
 
+            // 1. Intentar pillar a alguien de la lista
             const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
             
             if (data && data.length > 0) {
-                const tid = data[0].peer_id;
-                await supa.from('profiles').delete().eq('peer_id', tid);
-                dataConn = peer.connect(tid);
+                const targetId = data[0].peer_id;
+                // Borrarlo para que nadie más lo llame
+                await supa.from('profiles').delete().eq('peer_id', targetId);
+                
+                dataConn = peer.connect(targetId);
                 dataConn.on('open', () => {
                     dataConn.on('data', d => addMsg("them", d));
                     btn.innerText = "SIGUIENTE PERSONA ➔";
-                    btn.disabled = false;
                 });
-                manejarStream(peer.call(tid, myStream));
+                manejarStream(peer.call(targetId, myStream));
             } else {
+                // 2. Si no hay nadie, me apunto yo
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
-                setTimeout(() => {
-                    btn.innerText = "ESPERANDO...";
-                    btn.disabled = false;
-                }, 2000);
+                btn.innerText = "ESPERANDO PAREJA...";
             }
         }
 
         function manejarStream(c) {
             actualCall = c;
             c.on('stream', s => { 
-                document.getElementById('remote').srcObject = s;
+                document.getElementById('remote').srcObject = s; 
                 document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
             });
         }
