@@ -37,7 +37,7 @@
                 <div id="chat"></div>
                 <div class="chat-controls">
                     <div class="input-wrapper">
-                        <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
                         <button class="btn-send-inner" onclick="enviarMensaje()">ENVIAR</button>
                     </div>
                 </div>
@@ -61,6 +61,7 @@
 
         async function init() {
             try {
+                // Pedimos permisos con una configuración estándar
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
                 myId = 'pub-' + Math.random().toString(36).substr(2, 7);
@@ -68,7 +69,7 @@
                 peer.on('call', c => { c.answer(myStream); manejarStream(c); });
                 peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
             } catch (e) {
-                console.log("Esperando permisos o protocolo seguro...");
+                console.warn("Permiso de cámara denegado o sin HTTPS");
             }
         }
 
