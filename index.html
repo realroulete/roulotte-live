@@ -54,54 +54,62 @@
     </footer>
 
     <script>
-        // Configuración de Supabase
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
         let myStream, peer, myId, actualCall, dataConn;
 
-        // 1. Inicializar PeerJS y Cámara
         async function init() {
+            // Generamos ID único para la sesión
             myId = 'u-' + Math.random().toString(36).substr(2, 6);
             
-            // Usamos servidores STUN públicos de Google para asegurar conexión
+            // Configuración WebRTC reforzada para NAT/Firewalls
             peer = new Peer(myId, {
-                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
+                config: { 
+                    'iceServers': [
+                        { 'urls': 'stun:stun.l.google.com:19302' },
+                        { 'urls': 'stun:stun1.l.google.com:19302' },
+                        { 'urls': 'stun:stun2.l.google.com:19302' },
+                        { 'urls': 'stun:stun3.l.google.com:19302' },
+                        { 'urls': 'stun:stun4.l.google.com:19302' }
+                    ]
+                }
             });
 
             try {
-                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                // Resolución balanceada para evitar cortes en móviles
+                myStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
+                    audio: true 
+                });
                 document.getElementById('me').srcObject = myStream;
             } catch (e) {
-                alert("Por favor, activa tu cámara y micro.");
+                console.warn("Permiso de cámara denegado");
             }
 
-            // Escuchar llamadas entrantes
             peer.on('call', call => {
                 call.answer(myStream);
                 manejarLlamada(call);
             });
 
-            // Escuchar mensajes entrantes
             peer.on('connection', conn => {
                 dataConn = conn;
                 dataConn.on('data', d => pintarMsg("them", d));
             });
         }
 
-        // 2. Lógica de emparejamiento (SISTEMA VIP ADAPTADO)
         async function buscarPareja() {
             const btn = document.getElementById('btn-next');
             btn.innerText = "CONECTANDO...";
             btn.disabled = true;
 
-            // Limpiar todo antes de buscar
+            // Limpiar conexiones previas
             if (actualCall) actualCall.close();
             if (dataConn) dataConn.close();
             document.getElementById('remote').srcObject = null;
 
-            // Intentar pescar a alguien esperando
+            // 1. Buscar a alguien en la tabla 'profiles'
             const { data } = await supa.from('profiles')
                 .select('peer_id')
                 .neq('peer_id', myId)
@@ -110,14 +118,13 @@
             if (data && data.length > 0) {
                 const targetId = data[0].peer_id;
                 
-                // Intentamos borrarlo (si lo logramos, la pareja es nuestra)
+                // 2. Intentar borrar el ID (si lo borramos con éxito, somos la pareja oficial)
                 const { error } = await supa.from('profiles').delete().eq('peer_id', targetId);
 
                 if (!error) {
-                    // LLAMAR
                     const call = peer.call(targetId, myStream);
                     manejarLlamada(call);
-                    // CONECTAR CHAT
+                    
                     dataConn = peer.connect(targetId);
                     dataConn.on('open', () => {
                         dataConn.on('data', d => pintarMsg("them", d));
@@ -125,14 +132,13 @@
                         btn.innerText = "SIGUIENTE PERSONA ➔";
                     });
                 } else {
-                    // Si alguien se adelantó, buscamos otra vez
+                    // Si alguien se adelantó, reintentamos la búsqueda
                     buscarPareja();
                 }
             } else {
-                // Si no hay nadie, nos ponemos en la lista
+                // 3. No hay nadie, nos apuntamos nosotros
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
                 btn.innerText = "ESPERANDO...";
-                // Permitir reintento manual tras 3 segundos
                 setTimeout(() => { btn.disabled = false; }, 3000);
             }
         }
@@ -140,7 +146,11 @@
         function manejarLlamada(call) {
             actualCall = call;
             call.on('stream', s => {
-                document.getElementById('remote').srcObject = s;
+                const remoteVideo = document.getElementById('remote');
+                remoteVideo.srcObject = s;
+                // Forzar play para navegadores móviles
+                remoteVideo.play().catch(() => {});
+                
                 document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
                 document.getElementById('btn-next').disabled = false;
             });
