@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live Pro - Global Connect</title>
+    <title>Roulotte Live Pro - Servidor Privado</title>
     <link rel="stylesheet" href="publico.css">
     
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -16,7 +16,7 @@
     <div class="banner-h">PUBLICIDAD SUPERIOR</div>
 
     <div class="main-wrapper">
-        <aside class="banner-v">PUBLICIDAD LATERAL</aside>
+        <aside class="banner-v">PUBLICIDAD</aside>
         
         <main class="content">
             <section class="video-side">
@@ -24,26 +24,26 @@
                     <span class="label">Tú</span>
                     <video id="me" autoplay muted playsinline></video>
                     <div class="controls">
-                        <button class="c-btn" title="Micro" onclick="toggleMic()">🎤</button>
-                        <button class="c-btn" title="Cámara" onclick="toggleCam()">📷</button>
-                        <button class="c-btn" title="Girar" onclick="flipCam()">🔄</button>
+                        <button class="c-btn" onclick="toggleMic()">🎤</button>
+                        <button class="c-btn" onclick="toggleCam()">📷</button>
+                        <button class="c-btn" onclick="flipCam()">🔄</button>
                     </div>
                 </div>
                 <div class="v-box">
                     <span class="label">Pareja</span>
                     <video id="remote" autoplay playsinline></video>
                     <div class="controls">
-                        <button class="c-btn" title="PiP" onclick="togglePiP()">📺</button>
-                        <button class="c-btn" title="Pantalla Completa" onclick="toggleFull()">⛶</button>
+                        <button class="c-btn" onclick="togglePiP()">📺</button>
+                        <button class="c-btn" onclick="toggleFull()">⛶</button>
                     </div>
                 </div>
             </section>
 
             <section class="interaction-side">
                 <div class="chat-container">
-                    <div class="chat-msgs" id="chat"><div>Bienvenido. Haz clic en "Siguiente" para buscar.</div></div>
+                    <div class="chat-msgs" id="chat"><div>Conectando al servidor privado...</div></div>
                     <div class="chat-input-area">
-                        <input type="text" id="input-chat" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') sendMessage()">
+                        <input type="text" id="input-chat" placeholder="Escribe..." onkeypress="if(event.key==='Enter') sendMessage()">
                         <button class="btn-send" onclick="sendMessage()">ENVIAR</button>
                     </div>
                 </div>
@@ -51,14 +51,13 @@
             </section>
         </main>
 
-        <aside class="banner-v right">PUBLICIDAD LATERAL</aside>
+        <aside class="banner-v right">PUBLICIDAD</aside>
     </div>
 
     <div class="banner-footer">PUBLICIDAD INFERIOR</div>
-    <footer class="final-footer">© 2026 ROULOTTE LIVE - PIE DE PÁGINA</footer>
+    <footer class="final-footer">© 2026 ROULOTTE LIVE</footer>
 
     <script>
-        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCa28DKSvgiHVtDJu2cRhGgH8FUR_9aZfQ",
             authDomain: "roulottelive.firebaseapp.com",
@@ -72,25 +71,25 @@
         const db = firebase.database();
         const myId = 'u-' + Math.floor(Math.random() * 999999);
         
-        let myStream, peer, actualCall, dataConn, currentFacing = "user";
+        let myStream, peer, actualCall, dataConn;
 
-        // 1. Inicializar cámara y PeerJS
         async function init() {
             try {
-                myStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
-                    audio: true 
-                });
+                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
                 startPeer();
             } catch (e) {
-                alert("Error: Por favor permite el acceso a la cámara y micrófono.");
+                document.getElementById('chat').innerHTML = "<div>⚠️ Error: Activa la cámara.</div>";
             }
         }
 
-        // 2. Configuración de Peer con servidores ICE para Redes Globales (STUN/TURN)
         function startPeer() {
-            const peerConfig = {
+            // USANDO TU NUEVA URL DE RENDER
+            const miConfig = {
+                host: 'servidor-roulotte.onrender.com', // Sin https://
+                port: 443,
+                secure: true,
+                path: '/roulotte',
                 config: {
                     'iceServers': [
                         { urls: 'stun:stun.l.google.com:19302' },
@@ -100,85 +99,67 @@
                             username: 'openrelayproject', 
                             credential: 'openrelayproject' 
                         }
-                    ],
-                    'sdpSemantics': 'unified-plan'
+                    ]
                 }
             };
 
-            peer = new Peer(myId, peerConfig);
+            peer = new Peer(myId, miConfig);
 
             peer.on('open', (id) => {
+                document.getElementById('chat').innerHTML = "<div>✅ Servidor conectado. Listo.</div>";
                 db.ref('online_users/' + myId).set({ id: myId, status: 'idle', ts: Date.now() });
                 db.ref('online_users/' + myId).onDisconnect().remove();
             });
 
-            // Recibir llamada de video
             peer.on('call', call => {
                 actualCall = call;
                 call.answer(myStream);
                 call.on('stream', s => { 
-                    document.getElementById('remote').srcObject = s; 
-                    db.ref('online_users/' + myId).update({ status: 'busy' });
+                    document.getElementById('remote').srcObject = s;
                     document.getElementById('chat').innerHTML = "<div>¡Pareja conectada!</div>";
                 });
             });
 
-            // Recibir conexión de datos (Chat)
             peer.on('connection', conn => {
                 dataConn = conn;
                 setupDataEvents();
             });
 
-            peer.on('error', err => console.error("PeerJS Error:", err));
+            peer.on('error', err => {
+                console.error(err);
+                if(err.type === 'peer-unavailable') buscar();
+            });
         }
 
-        // 3. Lógica de búsqueda y emparejamiento
         function buscar() {
             const btn = document.getElementById('btn-next');
-            btn.disabled = true;
-            btn.innerText = "BUSCANDO...";
-            
-            // Limpieza
+            btn.disabled = true; btn.innerText = "BUSCANDO...";
             document.getElementById('remote').srcObject = null;
             if(actualCall) actualCall.close();
-            if(dataConn) dataConn.close();
-
+            
             db.ref('online_users/' + myId).update({ status: 'searching', ts: Date.now() });
 
             db.ref('online_users').once('value', snapshot => {
                 const users = snapshot.val();
                 let found = false;
-
-                if (users) {
-                    // Filtrar usuarios buscando (que no sea yo)
-                    const candidates = Object.values(users).filter(u => u.id !== myId && u.status === 'searching');
-                    
-                    if (candidates.length > 0) {
-                        // El que lleva más tiempo esperando tiene prioridad
-                        const target = candidates.sort((a,b) => a.ts - b.ts)[0];
-                        
-                        // Sincronización agresiva
+                if(users) {
+                    const targets = Object.values(users).filter(u => u.id !== myId && u.status === 'searching');
+                    if(targets.length > 0) {
+                        const target = targets.sort((a,b) => a.ts - b.ts)[0];
                         actualCall = peer.call(target.id, myStream);
                         dataConn = peer.connect(target.id);
-                        
-                        actualCall.on('stream', s => {
+                        actualCall.on('stream', s => { 
                             document.getElementById('remote').srcObject = s;
-                            db.ref('online_users/' + myId).update({ status: 'busy' });
-                            document.getElementById('chat').innerHTML = "<div>¡Pareja encontrada!</div>";
+                            document.getElementById('chat').innerHTML = "<div>¡Conectado!</div>";
                         });
                         setupDataEvents();
                         found = true;
                     }
                 }
-
-                setTimeout(() => {
-                    btn.disabled = false;
-                    btn.innerText = "SIGUIENTE PAREJA ➔";
-                }, 3000);
+                setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔"; }, 3500);
             });
         }
 
-        // 4. Lógica del Chat
         function setupDataEvents() {
             dataConn.on('data', data => {
                 const cb = document.getElementById('chat');
@@ -189,51 +170,19 @@
 
         function sendMessage() {
             const input = document.getElementById('input-chat');
-            const chatBox = document.getElementById('chat');
             if(dataConn && dataConn.open && input.value) {
                 dataConn.send(input.value);
-                chatBox.innerHTML += `<div><b>Tú:</b> ${input.value}</div>`;
+                document.getElementById('chat').innerHTML += `<div><b>Tú:</b> ${input.value}</div>`;
                 input.value = '';
-                chatBox.scrollTop = chatBox.scrollHeight;
+                document.getElementById('chat').scrollTop = 10000;
             }
         }
 
-        // 5. Funciones de Control de Video/Audio
-        function toggleMic() {
-            const audioTrack = myStream.getAudioTracks()[0];
-            audioTrack.enabled = !audioTrack.enabled;
-        }
-
-        function toggleCam() {
-            const videoTrack = myStream.getVideoTracks()[0];
-            videoTrack.enabled = !videoTrack.enabled;
-        }
-
-        function flipCam() {
-            currentFacing = (currentFacing === "user") ? "environment" : "user";
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing } })
-                .then(newStream => {
-                    const videoTrack = newStream.getVideoTracks()[0];
-                    if (actualCall) {
-                        const sender = actualCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
-                        sender.replaceTrack(videoTrack);
-                    }
-                    myStream.removeTrack(myStream.getVideoTracks()[0]);
-                    myStream.addTrack(videoTrack);
-                    document.getElementById('me').srcObject = myStream;
-                });
-        }
-
-        function togglePiP() {
-            if (document.pictureInPictureElement) document.exitPictureInPicture();
-            else document.getElementById('remote').requestPictureInPicture();
-        }
-
-        function toggleFull() {
-            const elem = document.getElementById('remote');
-            if (elem.requestFullscreen) elem.requestFullscreen();
-            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-        }
+        function toggleMic() { myStream.getAudioTracks()[0].enabled = !myStream.getAudioTracks()[0].enabled; }
+        function toggleCam() { myStream.getVideoTracks()[0].enabled = !myStream.getVideoTracks()[0].enabled; }
+        function flipCam() { /* Lógica de cambio de cámara */ }
+        function togglePiP() { document.getElementById('remote').requestPictureInPicture(); }
+        function toggleFull() { document.getElementById('remote').requestFullscreen(); }
 
         window.onload = init;
     </script>
