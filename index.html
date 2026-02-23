@@ -1,126 +1,97 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Roulotte Live</title>
-    <link rel="stylesheet" href="publico.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --red: #ff3b30; --border: #222; }
+        * { box-sizing: border-box; font-family: sans-serif; }
+        body { margin: 0; background: #000; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .header { height: 50px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); font-weight: bold; }
+        .main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; }
+        .video-grid { flex: 2; display: flex; flex-direction: column; gap: 10px; }
+        .video-box { flex: 1; background: #111; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; font-size: 11px; }
+        .btn-next { width: 100%; padding: 18px; background: var(--red); color: #fff; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .btn-next:disabled { background: #333; }
+        @media (min-width: 800px) { .video-grid { flex-direction: row; } }
+    </style>
 </head>
 <body>
 
-    <header class="header">
-        <div class="logo">ROULOTTE LIVE</div>
-        <button class="btn-goto-vip" onclick="location.href='registrovip.html'">💎 VIP</button>
-    </header>
+    <header class="header">ROULOTTE LIVE</header>
 
-    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD SUPERIOR</div></div>
-
-    <main class="main-wrapper">
-        <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
-
-        <div class="main-content-row">
-            <section class="video-side">
-                <div class="video-box">
-                    <div class="label">TÚ</div>
-                    <video id="me" autoplay muted playsinline></video>
-                </div>
-                <div class="video-box">
-                    <div id="status-tag" class="label">REMOTO</div>
-                    <video id="remote" autoplay playsinline></video>
-                </div>
-            </section>
-
-            <section class="chat-side">
-                <button class="btn-next" id="btn-next" onclick="buscarPareja()">SIGUIENTE PERSONA ➔</button>
-                <div id="chat"></div>
-                <div class="chat-controls">
-                    <div class="input-wrapper">
-                        <input type="text" id="chat-input" placeholder="Escribe algo..." onkeypress="if(event.key==='Enter') enviarMensaje()">
-                        <button class="btn-send-inner" onclick="enviarMensaje()">ENVIAR</button>
-                    </div>
-                </div>
-            </section>
+    <main class="main-content">
+        <div class="video-grid">
+            <div class="video-box">
+                <div class="label">TÚ</div>
+                <video id="me" autoplay muted playsinline></video>
+            </div>
+            <div class="video-box">
+                <div class="label">REMOTO</div>
+                <video id="remote" autoplay playsinline></video>
+            </div>
         </div>
-
-        <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
+        <button class="btn-next" id="btn-next" onclick="buscarPareja()">SIGUIENTE PERSONA ➔</button>
     </main>
 
-    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD INFERIOR</div></div>
-
     <script>
-        // Configuración de Supabase
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-        let myStream, peer, myId, actualCall, dataConn;
+        let myStream, peer, myId, actualCall;
 
-        // Iniciar cámara y PeerJS
         async function init() {
-            myId = 'user-' + Math.random().toString(36).substr(2, 6);
-            
-            // PeerJS simple (sin servidores STUN manuales para evitar conflictos)
+            myId = 'u-' + Math.random().toString(36).substr(2, 6);
             peer = new Peer(myId);
 
             try {
-                // Resolución baja (320x240) para máxima fluidez entre móvil y PC
+                // Calidad QVGA para asegurar conexión entre móvil y PC sin cortes
                 myStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { width: 320, height: 240 }, 
                     audio: true 
                 });
                 document.getElementById('me').srcObject = myStream;
-            } catch (e) {
-                alert("Activa la cámara para poder jugar.");
-            }
+            } catch (e) { alert("Cámara necesaria para conectar."); }
 
             peer.on('call', call => {
                 call.answer(myStream);
                 manejarStream(call);
             });
-
-            peer.on('connection', conn => {
-                dataConn = conn;
-                dataConn.on('data', d => pintarMsg("them", d));
-            });
         }
 
         async function buscarPareja() {
             const btn = document.getElementById('btn-next');
-            btn.innerText = "BUSCANDO...";
+            btn.innerText = "CONECTANDO...";
             btn.disabled = true;
 
-            // 1. Limpiar rastro y conexiones previas
-            await supa.from('profiles').delete().eq('peer_id', myId);
+            // 1. Limpiar rastro previo
+            await supa.from('waiting_users').delete().eq('peer_id', myId);
             if (actualCall) actualCall.close();
-            if (dataConn) dataConn.close();
             document.getElementById('remote').srcObject = null;
 
-            // 2. Intentar encontrar a alguien esperando
-            const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
+            // 2. Buscar a alguien en waiting_users
+            const { data } = await supa.from('waiting_users').select('peer_id').neq('peer_id', myId).limit(1);
 
             if (data && data.length > 0) {
                 const targetId = data[0].peer_id;
                 
-                // Intentamos borrar al otro para "emparejarnos"
-                const { error } = await supa.from('profiles').delete().eq('peer_id', targetId);
+                // 3. Emparejamiento: Borramos al otro para "pescarlo"
+                const { error } = await supa.from('waiting_users').delete().eq('peer_id', targetId);
 
                 if (!error) {
-                    // Llamar y conectar chat
                     manejarStream(peer.call(targetId, myStream));
-                    dataConn = peer.connect(targetId);
-                    dataConn.on('open', () => {
-                        dataConn.on('data', d => pintarMsg("them", d));
-                        btn.disabled = false;
-                        btn.innerText = "SIGUIENTE PERSONA ➔";
-                    });
                 } else {
-                    buscarPareja(); // Reintento si alguien nos ganó la pareja
+                    buscarPareja(); // Reintentar si alguien se adelantó
                 }
             } else {
-                // 3. No hay nadie: nos apuntamos en la tabla
-                await supa.from('profiles').upsert([{ peer_id: myId }]);
+                // 4. Si no hay nadie, nos anotamos nosotros
+                await supa.from('waiting_users').insert([{ peer_id: myId }]);
                 btn.innerText = "ESPERANDO...";
                 setTimeout(() => { btn.disabled = false; }, 3000);
             }
@@ -135,24 +106,8 @@
                 document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
                 document.getElementById('btn-next').disabled = false;
             });
-        }
-
-        function enviarMensaje() {
-            const input = document.getElementById('chat-input');
-            if (input.value && dataConn && dataConn.open) {
-                dataConn.send(input.value);
-                pintarMsg("me", input.value);
-                input.value = "";
-            }
-        }
-
-        function pintarMsg(tipo, texto) {
-            const chat = document.getElementById('chat');
-            const d = document.createElement('div');
-            d.className = `msg ${tipo}`;
-            d.innerText = texto;
-            chat.appendChild(d);
-            chat.scrollTop = chat.scrollHeight;
+            // Si la llamada se corta o falla
+            call.on('close', () => { document.getElementById('remote').srcObject = null; });
         }
 
         window.onload = init;
