@@ -15,7 +15,7 @@ body {
 }
 
 /* Header & Banners */
-.header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 1px solid var(--border); }
+.header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 1px solid var(--border); background: #000; }
 .btn-goto-vip { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 800; cursor: pointer; }
 .ad-horizontal { width: 100%; height: 80px; background: #050505; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); }
 .ad-placeholder { color: #333; font-size: 11px; font-weight: bold; }
@@ -40,24 +40,34 @@ video { width: 100%; height: 100%; object-fit: cover; }
 .msg.me { background: #007aff; margin-left: auto; }
 .msg.them { background: #262629; }
 
-/* ÁREA DE CONTROL: Input con botón dentro */
-.chat-controls { width: 100%; }
+/* ÁREA DE CONTROL: Input con botón rojo integrado */
+.chat-controls { width: 100%; position: relative; }
 .input-wrapper { position: relative; width: 100%; display: flex; align-items: center; }
 
 #chat-input { 
-    width: 100%; padding: 18px 90px 18px 18px; /* 90px de padding derecho para el botón */
+    width: 100%; padding: 18px 100px 18px 18px; 
     border-radius: 12px; border: 1px solid var(--border); 
     background: #1a1a1a; color: white; font-size: 16px; outline: none;
+    display: block;
 }
 
-/* El botón ROJO dentro del input */
+/* Botón ENVIAR integrado a la derecha (PC y Móvil) */
 .btn-send-inner { 
-    position: absolute; right: 8px; 
-    background: var(--red); color: white; border: none; 
-    padding: 10px 15px; border-radius: 8px; font-weight: bold; 
-    font-size: 12px; cursor: pointer; transition: 0.2s;
+    position: absolute; 
+    right: 10px; 
+    top: 50%; 
+    transform: translateY(-50%); 
+    background: var(--red); 
+    color: white; 
+    border: none; 
+    padding: 10px 18px; 
+    border-radius: 8px; 
+    font-weight: bold; 
+    font-size: 13px; 
+    cursor: pointer; 
+    z-index: 10;
 }
-.btn-send-inner:hover { opacity: 0.9; transform: scale(1.05); }
+.btn-send-inner:hover { background: #ff453a; }
 
 /* BOTÓN SIGUIENTE */
 .btn-next { 
@@ -67,22 +77,4 @@ video { width: 100%; height: 100%; object-fit: cover; }
 }
 
 /* Footer */
-.footer { background: #000; padding: 25px; text-align: center; width: 100%; color: #444; font-size: 12px; border-top: 1px solid var(--border); }
-
-/* RESPONSIVE MÓVIL */
-@media (max-width: 800px) {
-    .main-wrapper { flex-direction: column; }
-    .ad-side { display: none; }
-    .main-content-row { flex-direction: column; }
-    .video-side { padding: 10px; }
-    .video-box { aspect-ratio: 1 / 1; flex: none; width: 100%; }
-    
-    /* Mover Siguiente ARRIBA */
-    .btn-next { order: -1; margin-bottom: 5px; padding: 18px; }
-    
-    .chat-side { padding: 10px; }
-    #chat { min-height: 300px; }
-
-    #chat-input { padding: 15px 85px 15px 15px; font-size: 14px; }
-    .btn-send-inner { padding: 8px 12px; right: 6px; }
-}
+.footer { background: #000; padding: 25px; text-align:
