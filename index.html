@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roulotte Live - Final Layout</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -11,81 +11,81 @@
         :root { --red: #ff3b30; --border: #222; --bg: #000; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         
-        body { background: var(--bg); color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { background: var(--bg); color: #fff; min-height: 100vh; display: flex; flex-direction: column; }
 
-        /* Banners */
-        .header { height: 40px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0; }
+        /* Estructura fija */
+        .header { height: 45px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
         .banner-h { height: 50px; background: #050505; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; flex-shrink: 0; }
-        .footer { height: 30px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 9px; color: #444; flex-shrink: 0; }
 
-        .main-wrapper { flex: 1; display: flex; min-height: 0; }
-        .banner-v { width: 80px; background: #050505; border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; writing-mode: vertical-rl; flex-shrink: 0; }
+        /* Contenedor principal con Scroll en móvil */
+        .main-wrapper { flex: 1; display: flex; }
+        
+        .banner-v { width: 100px; background: #050505; border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; writing-mode: vertical-rl; flex-shrink: 0; }
         .banner-v.right { border-right: none; border-left: 1px solid var(--border); }
 
-        /* Area Central */
-        .content { flex: 1; display: flex; flex-direction: row; padding: 10px; gap: 10px; min-width: 0; }
+        /* Layout Dinámico */
+        .content { flex: 1; display: flex; padding: 15px; gap: 15px; }
 
-        /* Contenedor de Videos (50/50) */
-        .video-side { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-        .v-box { flex: 1; background: #111; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+        /* 1. Videos: 50/50 verticalmente */
+        .video-side { width: 450px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .v-box { flex: 1; aspect-ratio: 4/3; background: #111; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 3px 6px; border-radius: 4px; font-size: 10px; z-index: 5; }
+        .label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 4px; font-size: 11px; z-index: 5; }
 
-        /* Lado del Chat y Botón */
-        .interaction-side { width: 300px; display: flex; flex-direction: column; gap: 10px; }
-        .chat-container { flex: 1; background: #0a0a0a; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
-        .chat-msgs { flex: 1; padding: 10px; font-size: 12px; color: #888; overflow-y: auto; }
+        /* 2. Chat: Ocupa el 100% del espacio restante */
+        .interaction-side { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 300px; }
+        .chat-container { flex: 1; background: #0a0a0a; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; min-height: 300px; }
+        .chat-msgs { flex: 1; padding: 15px; font-size: 13px; color: #ccc; overflow-y: auto; }
         .chat-input { padding: 10px; border-top: 1px solid var(--border); }
-        .chat-input input { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; font-size: 13px; outline: none; }
+        .chat-input input { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; outline: none; }
 
-        .btn-next { width: 100%; padding: 18px; background: var(--red); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; flex-shrink: 0; }
-        .btn-next:disabled { background: #333; cursor: not-allowed; }
+        /* Botón bajo el chat */
+        .btn-next { width: 100%; padding: 20px; background: var(--red); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.2s; }
+        .btn-next:active { transform: scale(0.98); }
 
-        /* AJUSTES MÓVIL */
-        @media (max-width: 800px) {
+        /* RESPONSIVE MÓVIL */
+        @media (max-width: 900px) {
+            body { overflow-y: auto; } /* Habilitar Scroll */
+            .main-wrapper { flex-direction: column; }
             .banner-v { display: none; }
-            .content { flex-direction: column; padding: 5px; }
-            .interaction-side { width: 100%; flex: 1; min-height: 0; }
-            /* En móvil el botón se mueve arriba del chat */
-            .interaction-side { display: flex; flex-direction: column; }
-            .btn-next { order: -1; margin-bottom: 5px; height: 50px; padding: 10px; } 
-            .video-side { flex: 1.5; } /* Más espacio a los videos en móvil */
+            .content { flex-direction: column; height: auto; overflow: visible; }
+            .video-side { width: 100%; }
+            .v-box { aspect-ratio: 16/9; flex: none; height: 250px; }
+            .interaction-side { width: 100%; height: 500px; } /* Altura fija para el chat en móvil */
+            .btn-next { order: 2; margin-top: 10px; } /* Botón abajo en móvil también según tu petición */
         }
     </style>
 </head>
 <body>
 
-    <div class="header">ROULOTTE LIVE</div>
+    <header class="header">ROULOTTE LIVE</header>
     <div class="banner-h">PUBLICIDAD SUPERIOR</div>
 
     <div class="main-wrapper">
-        <div class="banner-v">PUBLICIDAD</div>
+        <aside class="banner-v">PUBLICIDAD LATERAL</aside>
 
-        <div class="content">
-            <div class="video-side">
-                <div class="v-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
-                <div class="v-box"><div class="label">PAREJA</div><video id="remote" autoplay playsinline></video></div>
-            </div>
+        <main class="content">
+            <section class="video-side">
+                <div class="v-box"><span class="label">TÚ</span><video id="me" autoplay muted playsinline></video></div>
+                <div class="v-box"><span class="label">PAREJA</span><video id="remote" autoplay playsinline></video></div>
+            </section>
 
-            <div class="interaction-side">
-                <button id="btn-next" class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
-                
+            <section class="interaction-side">
                 <div class="chat-container">
                     <div class="chat-msgs" id="chat">
-                        <div>Bienvenido al chat...</div>
-                        <div id="status" style="color:var(--red); font-size: 10px; margin-top:5px;">Conectando...</div>
+                        <div>Bienvenido. Esperando conexión...</div>
                     </div>
                     <div class="chat-input">
-                        <input type="text" id="chat-msg" placeholder="Escribe un mensaje...">
+                        <input type="text" placeholder="Escribe un mensaje aquí...">
                     </div>
                 </div>
-            </div>
-        </div>
+                <button id="btn-next" class="btn-next" onclick="buscar()">SIGUIENTE PAREJA ➔</button>
+                <div id="status" style="text-align: center; font-size: 10px; color: #555; margin-top: 5px;">Iniciando PeerJS...</div>
+            </section>
+        </main>
 
-        <div class="banner-v right">PUBLICIDAD</div>
+        <aside class="banner-v right">PUBLICIDAD LATERAL</aside>
     </div>
-
-    <div class="footer">© 2026 ROULOTTE LIVE</div>
 
     <script>
         const firebaseConfig = {
@@ -125,11 +125,9 @@
                 peer.on('call', call => {
                     actualCall = call;
                     call.answer(myStream);
-                    call.on('stream', s => {
-                        document.getElementById('remote').srcObject = s;
-                    });
+                    call.on('stream', s => { document.getElementById('remote').srcObject = s; });
                 });
-            } catch (e) { document.getElementById('status').innerText = "Sin cámara"; }
+            } catch (e) { document.getElementById('status').innerText = "Cámara no disponible"; }
         }
 
         async function buscar() {
@@ -151,12 +149,12 @@
                     actualCall = call;
                     call.on('stream', s => {
                         document.getElementById('remote').srcObject = s;
-                        btn.disabled = false; btn.innerText = "SIGUIENTE PERSONA ➔";
+                        btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔";
                     });
-                    setTimeout(() => { if(btn.disabled){ btn.disabled = false; btn.innerText = "SIGUIENTE PERSONA ➔"; } }, 6000);
+                    setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔"; }, 6000);
                 } else {
-                    document.getElementById('status').innerText = "Esperando pareja...";
-                    setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PERSONA ➔"; }, 3000);
+                    document.getElementById('status').innerText = "No hay nadie. Reintentando...";
+                    setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔"; }, 3000);
                 }
             });
         }
