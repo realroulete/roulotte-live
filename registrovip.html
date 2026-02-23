@@ -41,47 +41,4 @@
         }
     </script>
 </body>
-</html><!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roulotte - Únete al Club VIP</title>
-    <link rel="stylesheet" href="vip.css">
-</head>
-<body>
-    <header class="header">
-        <div class="logo">ROULOTTE <span class="gold-text">VIP GOLD</span></div>
-        <button class="btn-exit" onclick="location.href='index.html'">VOLVER</button>
-    </header>
-
-    <main class="main-wrapper" style="justify-content: center; align-items: center;">
-        <div class="registration-card gold-border" style="max-width: 500px; background: #111; padding: 40px; border-radius: 20px; text-align: center;">
-            <h1 class="gold-text">ACCESO EXCLUSIVO</h1>
-            <p style="color: #ccc; margin-bottom: 30px;">Conecta con usuarios verificados, sin publicidad y con cámaras de alta calidad.</p>
-            
-            <div style="margin-bottom: 20px; text-align: left;">
-                <label style="display: block; margin-bottom: 8px; font-size: 14px; color: var(--gold);">Nombre de Usuario VIP</label>
-                <input type="text" id="vip-user" placeholder="Tu nombre..." style="width: 100%; padding: 15px; border-radius: 10px; border: 1px solid #333; background: #000; color: white;">
-            </div>
-
-            <button class="btn-next-gold" onclick="procesarRegistro()" style="margin-top: 10px;">REGISTRARSE Y ENTRAR ➔</button>
-            
-            <p style="font-size: 11px; color: #555; margin-top: 20px;">Al hacer clic, aceptas los términos de la comunidad VIP.</p>
-        </div>
-    </main>
-
-    <script>
-        function procesarRegistro() {
-            const user = document.getElementById('vip-user').value;
-            if(user.length > 2) {
-                // Aquí podrías añadir lógica de pago. Por ahora, nos lleva a la sala.
-                localStorage.setItem('vip_session', 'active');
-                location.href = 'salavip.html';
-            } else {
-                alert("Por favor, introduce un nombre válido.");
-            }
-        }
-    </script>
-</body>
 </html>
