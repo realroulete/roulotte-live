@@ -54,15 +54,18 @@
     </footer>
 
     <script>
+        // Configuración de Supabase
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
         let myStream, peer, myId, actualCall, dataConn;
 
+        // 1. Inicializar PeerJS y Cámara
         async function init() {
-            myId = 'user-' + Math.random().toString(36).substr(2, 8);
+            myId = 'u-' + Math.random().toString(36).substr(2, 6);
             
+            // Usamos servidores STUN públicos de Google para asegurar conexión
             peer = new Peer(myId, {
                 config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
             });
@@ -70,59 +73,71 @@
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
-            } catch (e) { 
-                console.error("Cámara denegada"); 
+            } catch (e) {
+                alert("Por favor, activa tu cámara y micro.");
             }
 
+            // Escuchar llamadas entrantes
             peer.on('call', call => {
                 call.answer(myStream);
-                manejarStream(call);
+                manejarLlamada(call);
             });
 
+            // Escuchar mensajes entrantes
             peer.on('connection', conn => {
                 dataConn = conn;
-                dataConn.on('data', d => pintarMensaje("them", d));
+                dataConn.on('data', d => pintarMsg("them", d));
             });
         }
 
+        // 2. Lógica de emparejamiento (SISTEMA VIP ADAPTADO)
         async function buscarPareja() {
             const btn = document.getElementById('btn-next');
-            btn.innerText = "BUSCANDO...";
+            btn.innerText = "CONECTANDO...";
             btn.disabled = true;
 
+            // Limpiar todo antes de buscar
             if (actualCall) actualCall.close();
             if (dataConn) dataConn.close();
             document.getElementById('remote').srcObject = null;
 
+            // Intentar pescar a alguien esperando
             const { data } = await supa.from('profiles')
                 .select('peer_id')
-                .not('peer_id', 'is', null)
                 .neq('peer_id', myId)
                 .limit(1);
 
             if (data && data.length > 0) {
                 const targetId = data[0].peer_id;
+                
+                // Intentamos borrarlo (si lo logramos, la pareja es nuestra)
                 const { error } = await supa.from('profiles').delete().eq('peer_id', targetId);
 
                 if (!error) {
-                    manejarStream(peer.call(targetId, myStream));
+                    // LLAMAR
+                    const call = peer.call(targetId, myStream);
+                    manejarLlamada(call);
+                    // CONECTAR CHAT
                     dataConn = peer.connect(targetId);
                     dataConn.on('open', () => {
-                        dataConn.on('data', d => pintarMensaje("them", d));
+                        dataConn.on('data', d => pintarMsg("them", d));
                         btn.disabled = false;
                         btn.innerText = "SIGUIENTE PERSONA ➔";
                     });
                 } else {
-                    buscarPareja(); 
+                    // Si alguien se adelantó, buscamos otra vez
+                    buscarPareja();
                 }
             } else {
+                // Si no hay nadie, nos ponemos en la lista
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
-                btn.innerText = "ESPERANDO PAREJA...";
-                setTimeout(() => { btn.disabled = false; }, 2000);
+                btn.innerText = "ESPERANDO...";
+                // Permitir reintento manual tras 3 segundos
+                setTimeout(() => { btn.disabled = false; }, 3000);
             }
         }
 
-        function manejarStream(call) {
+        function manejarLlamada(call) {
             actualCall = call;
             call.on('stream', s => {
                 document.getElementById('remote').srcObject = s;
@@ -135,15 +150,15 @@
             const input = document.getElementById('chat-input');
             if (input.value && dataConn && dataConn.open) {
                 dataConn.send(input.value);
-                pintarMensaje("me", input.value);
+                pintarMsg("me", input.value);
                 input.value = "";
             }
         }
 
-        function pintarMensaje(autor, texto) {
+        function pintarMsg(tipo, texto) {
             const chat = document.getElementById('chat');
             const d = document.createElement('div');
-            d.className = `msg ${autor}`;
+            d.className = `msg ${tipo}`;
             d.innerText = texto;
             chat.appendChild(d);
             chat.scrollTop = chat.scrollHeight;
