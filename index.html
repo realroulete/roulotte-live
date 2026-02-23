@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live</title>
+    <title>Roulotte Live - Estable</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -11,8 +11,7 @@
         * { box-sizing: border-box; font-family: sans-serif; }
         body { margin: 0; background: #000; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .header { height: 50px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); font-weight: bold; flex-shrink: 0; }
-        .ad-horizontal { height: 50px; background: #050505; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); color: #333; font-size: 10px; flex-shrink: 0; }
-        .ad-footer { height: 50px; background: #050505; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--border); color: #333; font-size: 10px; flex-shrink: 0; }
+        .ad-horizontal, .ad-footer { height: 50px; background: #050505; display: flex; align-items: center; justify-content: center; color: #333; font-size: 10px; flex-shrink: 0; border: 1px solid var(--border); }
         .main-wrapper { display: flex; flex: 1; overflow: hidden; }
         .ad-side { width: 100px; background: #050505; display: flex; align-items: center; justify-content: center; color: #333; font-size: 10px; flex-shrink: 0; }
         .main-content-row { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; overflow: hidden; }
@@ -20,8 +19,8 @@
         .video-box { flex: 1; background: #111; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; background: #000; }
         .label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 3px 6px; border-radius: 4px; font-size: 10px; z-index: 5; }
-        .btn-next { width: 100%; padding: 18px; background: var(--red); color: #fff; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
-        .btn-next:disabled { background: #333; opacity: 0.8; }
+        .btn-next { width: 100%; padding: 18px; background: var(--red); color: #fff; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+        .btn-next:disabled { background: #333; opacity: 0.7; }
         @media (min-width: 850px) { .video-side { flex-direction: row; } .ad-side { width: 120px; } }
         @media (max-width: 600px) { .ad-side { display: none; } }
     </style>
@@ -35,14 +34,8 @@
         <aside class="ad-side">ADS</aside>
         <section class="main-content-row">
             <div class="video-side">
-                <div class="video-box">
-                    <div class="label">TÚ</div>
-                    <video id="me" autoplay muted playsinline></video>
-                </div>
-                <div class="video-box">
-                    <div class="label">REMOTO</div>
-                    <video id="remote" autoplay playsinline></video>
-                </div>
+                <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
+                <div class="video-box"><div class="label">REMOTO</div><video id="remote" autoplay playsinline></video></div>
             </div>
             <button class="btn-next" id="btn-next" onclick="buscarPareja()">SIGUIENTE PERSONA ➔</button>
         </section>
@@ -61,28 +54,30 @@
         async function init() {
             myId = 'u-' + Math.random().toString(36).substr(2, 6);
             
-            // CONFIGURACIÓN REFORZADA CON STUN PARA ATRAVESAR FIREWALLS
+            // Configuración ICE ultra-compatible
             peer = new Peer(myId, {
                 config: {
                     'iceServers': [
-                        { 'urls': 'stun:stun.l.google.com:19302' },
-                        { 'urls': 'stun:stun1.l.google.com:19302' }
-                    ]
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun3.l.google.com:19302' },
+                        { urls: 'stun:stun4.l.google.com:19302' }
+                    ],
+                    'sdpSemantics': 'unified-plan'
                 }
             });
 
             try {
+                // Calidad reducida para asegurar fluidez (Lento = Desconexión)
                 myStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
+                    video: { width: 320, height: 240, frameRate: 15 }, 
                     audio: true 
                 });
                 document.getElementById('me').srcObject = myStream;
-            } catch (e) {
-                alert("Activa la cámara para funcionar");
-            }
+            } catch (e) { console.error("Cámara error"); }
 
             peer.on('call', call => {
-                console.log("Recibiendo llamada...");
                 call.answer(myStream);
                 manejarStream(call);
             });
@@ -90,67 +85,41 @@
 
         async function buscarPareja() {
             const btn = document.getElementById('btn-next');
-            btn.innerText = "BUSCANDO PAREJA...";
+            btn.innerText = "CONECTANDO...";
             btn.disabled = true;
 
-            // Limpieza profunda
             if (actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
             await supa.from('waiting_users').delete().eq('peer_id', myId);
 
-            // 1. Intentar pescar a alguien
             const { data } = await supa.from('waiting_users').select('peer_id').neq('peer_id', myId).limit(1);
 
             if (data && data.length > 0) {
                 const targetId = data[0].peer_id;
-                btn.innerText = "CONECTANDO...";
-                
-                // 2. Intentar borrar para confirmar "match"
                 const { error } = await supa.from('waiting_users').delete().eq('peer_id', targetId);
 
                 if (!error) {
-                    console.log("Llamando a:", targetId);
                     const call = peer.call(targetId, myStream);
                     manejarStream(call);
-                } else {
-                    buscarPareja(); // Reintento si alguien lo pescó antes
-                }
+                } else { buscarPareja(); }
             } else {
-                // 3. Ponerse en cola
-                const { error: insError } = await supa.from('waiting_users').upsert([{ peer_id: myId }]);
-                if (insError) console.error("Error Supabase:", insError);
-                
-                btn.innerText = "ESPERANDO A ALGUIEN...";
-                setTimeout(() => { 
-                    btn.disabled = false; 
-                    btn.innerText = "SIGUIENTE PERSONA ➔"; 
-                }, 4000);
+                await supa.from('waiting_users').upsert([{ peer_id: myId }]);
+                btn.innerText = "ESPERANDO...";
+                setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PERSONA ➔"; }, 3000);
             }
         }
 
         function manejarStream(call) {
             actualCall = call;
-            
-            // Timeout por si la conexión ICE falla
-            const timeout = setTimeout(() => {
-                if (!document.getElementById('remote').srcObject) {
-                    document.getElementById('btn-next').innerText = "ERROR DE SEÑAL, REINTENTA";
-                    document.getElementById('btn-next').disabled = false;
-                }
-            }, 10000);
-
             call.on('stream', s => {
-                clearTimeout(timeout);
                 const rVideo = document.getElementById('remote');
                 rVideo.srcObject = s;
-                rVideo.play().catch(e => console.log("Auto-play error"));
-                
+                rVideo.play().catch(()=>{});
                 document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
                 document.getElementById('btn-next').disabled = false;
             });
-
-            call.on('close', () => { document.getElementById('remote').srcObject = null; });
-            call.on('error', e => { console.error("Peer Error:", e); buscarPareja(); });
+            // Si después de 8 segundos no hay video, liberar botón
+            setTimeout(() => { if(actualCall) document.getElementById('btn-next').disabled = false; }, 8000);
         }
 
         window.onload = init;
