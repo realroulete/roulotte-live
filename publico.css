@@ -1,72 +1,91 @@
 :root {
     --bg: #000000;
     --red: #ff3b30;
-    --card: #151515;
+    --card: #121212;
+    --border: #222;
 }
 
-* { box-sizing: border-box; } /* Fix para que nada se salga por la derecha */
+* { box-sizing: border-box; }
 
 body { 
-    margin: 0; 
-    background: var(--bg); 
-    color: white; 
-    font-family: sans-serif; 
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    overflow-x: hidden; /* Elimina el scroll lateral */
+    margin: 0; background: var(--bg); color: white; 
+    font-family: -apple-system, sans-serif; 
+    display: flex; flex-direction: column; min-height: 100vh;
+    overflow-x: hidden;
 }
 
 .header { 
     height: 60px; display: flex; justify-content: space-between; 
-    align-items: center; padding: 0 20px; background: #111; border-bottom: 1px solid #333;
+    align-items: center; padding: 0 15px; background: #000; border-bottom: 1px solid var(--border);
 }
 
-.btn-goto-vip { background: #f1c40f; color: #000; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+.btn-goto-vip { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 800; cursor: pointer; }
 
 /* Banners */
 .ad-horizontal {
-    width: 100%; height: 80px; background: #0a0a0a;
-    display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #222;
+    width: 100%; height: 80px; background: #050505;
+    display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border);
 }
-.ad-placeholder { color: #444; font-size: 10px; text-align: center; width: 100%; }
+.ad-placeholder { color: #333; font-size: 11px; font-weight: bold; }
 
-/* Main Area */
+/* Main Wrapper */
 .main-wrapper { display: flex; flex: 1; width: 100%; }
 .ad-side { width: 100px; background: #000; display: flex; align-items: center; justify-content: center; }
-.ad-placeholder-vert { color: #333; transform: rotate(-90deg); font-size: 10px; }
+.ad-placeholder-vert { color: #222; transform: rotate(-90deg); font-size: 10px; }
 
-.main-content-row { display: flex; flex: 1; width: 100%; }
+.main-content-row { display: flex; flex: 1; width: 100%; max-width: 1600px; margin: 0 auto; }
 
-/* 50% VIDEOS */
-.video-side { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; }
+/* COLUMNAS 50/50 */
+.video-side, .chat-side { 
+    flex: 1; display: flex; flex-direction: column; 
+    padding: 15px; gap: 15px; min-width: 0;
+}
+
+/* VIDEOS (Cajas iguales) */
 .video-box { 
-    flex: 1; background: #111; border-radius: 10px; position: relative; 
-    overflow: hidden; border: 1px solid #333; min-height: 200px;
+    flex: 1; background: #000; border-radius: 15px; position: relative; 
+    overflow: hidden; border: 1px solid var(--border);
+    /* Mantiene las cámaras cuadradas o proporcionales sin estirar */
+    display: flex; align-items: center; justify-content: center;
 }
 video { width: 100%; height: 100%; object-fit: cover; }
-.label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 4px 8px; font-size: 10px; z-index: 5; }
+.label { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 5px; font-size: 10px; z-index: 5; }
 
-/* 50% CHAT */
-.chat-side { flex: 1; display: flex; flex-direction: column; padding: 10px; background: #050505; }
-#chat { flex: 1; background: var(--card); border-radius: 8px; margin-bottom: 10px; overflow-y: auto; padding: 10px; border: 1px solid #222; }
+/* CHAT PRO */
+#chat { 
+    flex: 1; background: var(--card); border-radius: 15px; 
+    overflow-y: auto; padding: 15px; border: 1px solid var(--border);
+}
+.msg { margin-bottom: 10px; padding: 12px; border-radius: 12px; font-size: 14px; max-width: 85%; line-height: 1.4; }
+.msg.me { background: #007aff; margin-left: auto; color: white; border-bottom-right-radius: 2px; }
+.msg.them { background: #262629; color: #fff; border-bottom-left-radius: 2px; }
 
-.input-container { display: flex; width: 100%; gap: 5px; margin-bottom: 10px; }
-input { flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #333; background: #222; color: white; }
-.btn-send { background: #444; border: none; color: white; padding: 0 20px; border-radius: 8px; cursor: pointer; }
+/* INPUT DEL CHAT (Ocupa todo el ancho) */
+.chat-controls { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.input-container { display: flex; gap: 10px; width: 100%; } /* Si usas el div contenedor */
 
-.btn-next { 
-    width: 100%; padding: 20px; background: var(--red); color: white; 
-    border: none; border-radius: 10px; font-weight: bold; font-size: 1.2rem; cursor: pointer;
+#chat-input { 
+    width: 100%; padding: 18px; border-radius: 12px; border: 1px solid var(--border); 
+    background: #1a1a1a; color: white; font-size: 16px; outline: none;
+}
+#chat-input:focus { border-color: #444; }
+
+.btn-send { 
+    padding: 0 20px; background: #333; border: none; color: white; 
+    border-radius: 12px; font-weight: bold; cursor: pointer;
 }
 
-.desktop-only { display: block; }
-.mobile-only { display: none; }
+/* BOTÓN SIGUIENTE */
+.btn-next { 
+    width: 100%; padding: 22px; background: var(--red); color: white; 
+    border: none; border-radius: 15px; font-weight: 900; font-size: 1.3rem; 
+    cursor: pointer; order: 3; /* Por defecto abajo */
+}
 
-/* Footer Centrado */
+/* FOOTER CENTRADO */
 .footer { 
-    background: #111; padding: 20px; text-align: center; width: 100%;
-    color: #555; font-size: 12px; border-top: 1px solid #333;
+    background: #000; padding: 25px; text-align: center; width: 100%;
+    color: #444; font-size: 12px; border-top: 1px solid var(--border);
 }
 
 /* AJUSTES MÓVIL */
@@ -75,14 +94,14 @@ input { flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #333; back
     .ad-side { display: none; }
     .main-content-row { flex-direction: column; }
     
-    .video-side, .chat-side { width: 100%; flex: none; }
+    .video-side { padding: 10px; gap: 10px; height: auto; }
+    /* Cámaras iguales en vertical y horizontal */
+    .video-box { aspect-ratio: 1 / 1; flex: none; width: 100%; }
     
-    /* Evitar cámaras estiradas */
-    .video-box { min-height: 280px; max-height: 300px; }
+    .chat-side { padding: 10px; }
     
-    /* Botón Siguiente ARRIBA en móvil */
-    .desktop-only { display: none; }
-    .mobile-only { display: block; margin-bottom: 10px; }
+    /* MOVER BOTÓN SIGUIENTE ARRIBA DEL CHAT */
+    .btn-next { order: -1; margin-bottom: 10px; }
     
-    #chat { min-height: 300px; }
+    #chat { min-height: 350px; }
 }
