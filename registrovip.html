@@ -2,53 +2,41 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Registro VIP - Roulotte</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso VIP</title>
+    <link rel="stylesheet" href="publico.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body style="display:flex; justify-content:center; align-items:center; height:100vh; background:#000;">
-    <div class="auth-card" style="background:#111; padding:40px; border-radius:20px; border:1px solid #333; width:350px;">
-        <h2 style="color:var(--accent); text-align:center;">ÁREA VIP 💎</h2>
-        
-        <div id="login-form">
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="pass" placeholder="Contraseña">
-            <button class="btn-next" onclick="entrar()">ENTRAR A SALA VIP</button>
-            <p onclick="verReg()" style="cursor:pointer; font-size:12px; margin-top:10px;">¿No tienes cuenta? Regístrate</p>
-        </div>
-
-        <div id="reg-form" style="display:none;">
-            <input type="text" id="name-reg" placeholder="Nombre">
-            <input type="email" id="email-reg" placeholder="Email">
-            <input type="password" id="pass-reg" placeholder="Contraseña">
-            <button class="btn-next" onclick="solicitar()">SOLICITAR REGISTRO</button>
-            <p onclick="verLogin()" style="cursor:pointer; font-size:12px; margin-top:10px;">Volver al Login</p>
+    <div style="background:#111; padding:30px; border-radius:15px; border:1px solid #333; width:300px; text-align:center;">
+        <h2 style="color:#f1c40f;">ROULOTTE VIP</h2>
+        <div id="auth-box">
+            <input type="email" id="email" placeholder="Email" style="width:100%; padding:10px; margin-bottom:10px; background:#222; border:1px solid #444; color:white;">
+            <input type="password" id="pass" placeholder="Contraseña" style="width:100%; padding:10px; margin-bottom:10px; background:#222; border:1px solid #444; color:white;">
+            <button onclick="login()" style="width:100%; padding:15px; background:#f1c40f; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">ENTRAR</button>
+            <p onclick="registrar()" style="color:#666; font-size:12px; margin-top:15px; cursor:pointer;">¿Eres nuevo? Solicitar registro</p>
         </div>
     </div>
 
     <script>
-        const supa = supabase.createClient("URL", "ANON_KEY");
+        const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
+        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
+        const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-        async function entrar() {
+        async function login() {
             const { data, error } = await supa.auth.signInWithPassword({
                 email: document.getElementById('email').value,
                 password: document.getElementById('pass').value
             });
-            if (error) alert("Acceso denegado");
-            else location.href = 'vip.html'; // Redirige a la sala privada
+            if (error) alert("Error de acceso"); else location.href = "salavip.html";
         }
 
-        async function solicitar() {
-            const { error } = await supa.from('verification_requests').insert([{
-                username: document.getElementById('name-reg').value,
-                email: document.getElementById('email-reg').value,
-                password: document.getElementById('pass-reg').value
-            }]);
-            if (error) alert("Error"); else alert("Solicitud enviada");
+        async function registrar() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('pass').value;
+            const { error } = await supa.from('verification_requests').insert([{ email, password, username: 'Nuevo Aspirante' }]);
+            if (error) alert("Error al enviar solicitud"); else alert("Solicitud enviada al admin.");
         }
-
-        function verReg() { document.getElementById('login-form').style.display='none'; document.getElementById('reg-form').style.display='block'; }
-        function verLogin() { document.getElementById('login-form').style.display='block'; document.getElementById('reg-form').style.display='none'; }
     </script>
 </body>
 </html>
