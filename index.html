@@ -15,99 +15,87 @@
         <button class="btn-goto-vip" onclick="location.href='registrovip.html'">💎 ACCESO VIP</button>
     </header>
 
+    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD SUPERIOR</div></div>
+
     <main class="main-wrapper">
         <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
 
         <div class="main-content-row">
             <section class="video-side">
-                <div class="video-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
-                <div class="video-box"><div id="status-tag" class="label">BUSCANDO...</div><video id="remote" autoplay playsinline></video></div>
+                <div class="video-box">
+                    <div class="label">TÚ</div>
+                    <video id="me" autoplay muted playsinline></video>
+                </div>
+                <div class="video-box">
+                    <div id="status-tag" class="label">BUSCANDO...</div>
+                    <video id="remote" autoplay playsinline></video>
+                </div>
             </section>
 
             <section class="chat-side">
+                <button class="btn-next" onclick="buscar()">SIGUIENTE ➔</button>
+                
                 <div id="chat"></div>
+                
                 <div class="chat-controls">
-                    <div class="input-wrapper">
-                        <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') enviarMensaje()">
-                        <button class="btn-send-inner" onclick="enviarMensaje()">ENVIAR</button>
+                    <div class="input-row">
+                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <button class="btn-send" onclick="enviarMensaje()">ENVIAR</button>
                     </div>
                 </div>
-                <button class="btn-next" id="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
             </section>
         </div>
 
         <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
     </main>
 
+    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD INFERIOR</div></div>
+
+    <footer class="footer">
+        <p>&copy; 2026 Roulotte Network | <a href="#" style="color:#666; text-decoration:none;">Privacidad</a></p>
+    </footer>
+
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
         let myStream, peer, myId, actualCall, dataConn;
 
         async function init() {
-            myId = 'pub-' + Math.random().toString(36).substr(2, 7);
-            peer = new Peer(myId, { debug: 1 });
-            
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
-            } catch (e) { console.error("Cámara no disponible"); }
-
-            peer.on('call', c => { 
-                c.answer(myStream); 
-                manejarStream(c); 
-            });
-            peer.on('connection', c => { 
-                dataConn = c; 
-                c.on('data', d => addMsg("them", d)); 
-            });
+                myId = 'pub-' + Math.random().toString(36).substr(2, 7);
+                peer = new Peer(myId);
+                peer.on('call', c => { c.answer(myStream); manejarStream(c); });
+                peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
+            } catch (e) { console.error("Error multimedia"); }
         }
 
         async function buscar() {
-            const btn = document.getElementById('btn-next');
-            btn.innerText = "CONECTANDO...";
-            
             if(actualCall) actualCall.close();
-            if(dataConn) dataConn.close();
             document.getElementById('remote').srcObject = null;
-
-            // 1. Intentar pillar a alguien de la lista
             const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
-            
             if (data && data.length > 0) {
-                const targetId = data[0].peer_id;
-                // Borrarlo para que nadie más lo llame
-                await supa.from('profiles').delete().eq('peer_id', targetId);
-                
-                dataConn = peer.connect(targetId);
-                dataConn.on('open', () => {
-                    dataConn.on('data', d => addMsg("them", d));
-                    btn.innerText = "SIGUIENTE PERSONA ➔";
-                });
-                manejarStream(peer.call(targetId, myStream));
+                const tid = data[0].peer_id;
+                await supa.from('profiles').delete().eq('peer_id', tid);
+                dataConn = peer.connect(tid);
+                dataConn.on('data', d => addMsg("them", d));
+                manejarStream(peer.call(tid, myStream));
             } else {
-                // 2. Si no hay nadie, me apunto yo
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
-                btn.innerText = "ESPERANDO PAREJA...";
             }
         }
 
         function manejarStream(c) {
             actualCall = c;
-            c.on('stream', s => { 
-                document.getElementById('remote').srcObject = s; 
-                document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
-            });
+            c.on('stream', s => { document.getElementById('remote').srcObject = s; });
         }
 
         function enviarMensaje() {
             const i = document.getElementById('chat-input');
-            if (i.value && dataConn) { 
-                dataConn.send(i.value); 
-                addMsg("me", i.value); 
-                i.value = ""; 
-            }
+            if (i.value && dataConn) { dataConn.send(i.value); addMsg("me", i.value); i.value = ""; }
         }
 
         function addMsg(t, x) {
@@ -118,6 +106,7 @@
             c.appendChild(div);
             c.scrollTop = c.scrollHeight;
         }
+
         window.onload = init;
     </script>
 </body>
