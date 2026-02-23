@@ -33,7 +33,7 @@
             </section>
 
             <section class="chat-side">
-                <button class="btn-next" onclick="buscar()">SIGUIENTE ➔</button>
+                <button class="btn-next" id="next-person" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
                 <div id="chat"></div>
                 <div class="chat-controls">
                     <div class="input-wrapper">
@@ -61,29 +61,36 @@
 
         async function init() {
             try {
-                // Pedimos permisos con una configuración estándar
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
                 myId = 'pub-' + Math.random().toString(36).substr(2, 7);
                 peer = new Peer(myId);
                 peer.on('call', c => { c.answer(myStream); manejarStream(c); });
-                peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
-            } catch (e) {
-                console.warn("Permiso de cámara denegado o sin HTTPS");
-            }
+                peer.on('connection', c => { 
+                    dataConn = c; 
+                    c.on('data', d => addMsg("them", d)); 
+                });
+            } catch (e) { console.warn("Falta permiso cámara/HTTPS"); }
         }
 
         async function buscar() {
+            console.log("Buscando siguiente...");
             if(actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
+            
             const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
+            
             if (data && data.length > 0) {
                 const tid = data[0].peer_id;
                 await supa.from('profiles').delete().eq('peer_id', tid);
                 dataConn = peer.connect(tid);
-                dataConn.on('data', d => addMsg("them", d));
+                dataConn.on('open', () => {
+                    dataConn.on('data', d => addMsg("them", d));
+                });
                 manejarStream(peer.call(tid, myStream));
-            } else { await supa.from('profiles').upsert([{ peer_id: myId }]); }
+            } else { 
+                await supa.from('profiles').upsert([{ peer_id: myId }]); 
+            }
         }
 
         function manejarStream(c) {
@@ -93,7 +100,11 @@
 
         function enviarMensaje() {
             const i = document.getElementById('chat-input');
-            if (i.value && dataConn) { dataConn.send(i.value); addMsg("me", i.value); i.value = ""; }
+            if (i.value && dataConn) { 
+                dataConn.send(i.value); 
+                addMsg("me", i.value); 
+                i.value = ""; 
+            }
         }
 
         function addMsg(t, x) {
