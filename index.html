@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -27,7 +27,7 @@
                     <video id="me" autoplay muted playsinline></video>
                 </div>
                 <div class="video-box">
-                    <div id="status-tag" class="label">BUSCANDO...</div>
+                    <div id="status-tag" class="label">REMOTO</div>
                     <video id="remote" autoplay playsinline></video>
                 </div>
             </section>
@@ -57,45 +57,73 @@
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
         let myStream, peer, myId, actualCall, dataConn;
 
         async function init() {
             myId = 'pub-' + Math.random().toString(36).substr(2, 7);
-            peer = new Peer(myId, { debug: 1 });
+            
+            // Configuración PeerJS con servidores STUN para conectar cámaras tras firewalls
+            peer = new Peer(myId, {
+                config: { 'iceServers': [
+                    { 'urls': 'stun:stun.l.google.com:19302' },
+                    { 'urls': 'stun:stun1.l.google.com:19302' }
+                ]}
+            });
+
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
-            } catch (e) { console.warn("Cámara no activa"); }
-            peer.on('call', c => { c.answer(myStream); manejarStream(c); });
-            peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
+            } catch (e) {
+                console.warn("Acceso a cámara denegado");
+            }
+
+            peer.on('call', call => {
+                call.answer(myStream);
+                manejarStream(call);
+            });
+
+            peer.on('connection', conn => {
+                dataConn = conn;
+                dataConn.on('data', d => addMsg("them", d));
+            });
         }
 
         async function buscar() {
             const btn = document.getElementById('btn-next');
             btn.innerText = "BUSCANDO...";
+            
             if(actualCall) actualCall.close();
             if(dataConn) dataConn.close();
             document.getElementById('remote').srcObject = null;
 
+            // Buscamos a alguien esperando en Supabase
             const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
+
             if (data && data.length > 0) {
                 const tid = data[0].peer_id;
                 await supa.from('profiles').delete().eq('peer_id', tid);
+                
+                // Conectamos video
+                const call = peer.call(tid, myStream);
+                manejarStream(call);
+
+                // Conectamos chat
                 dataConn = peer.connect(tid);
                 dataConn.on('open', () => {
                     dataConn.on('data', d => addMsg("them", d));
-                    btn.innerText = "SIGUIENTE PERSONA ➔";
+                    btn.innerText = "CONECTADO ✓";
                 });
-                manejarStream(peer.call(tid, myStream));
             } else {
+                // Si no hay nadie, nos apuntamos nosotros
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
-                btn.innerText = "ESPERANDO PAREJA...";
+                btn.innerText = "ESPERANDO...";
             }
         }
 
-        function manejarStream(c) {
-            actualCall = c;
-            c.on('stream', s => { 
+        function manejarStream(call) {
+            actualCall = call;
+            call.on('stream', s => { 
                 document.getElementById('remote').srcObject = s; 
                 document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
             });
@@ -103,7 +131,11 @@
 
         function enviarMensaje() {
             const i = document.getElementById('chat-input');
-            if (i.value && dataConn) { dataConn.send(i.value); addMsg("me", i.value); i.value = ""; }
+            if (i.value && dataConn) { 
+                dataConn.send(i.value); 
+                addMsg("me", i.value); 
+                i.value = ""; 
+            }
         }
 
         function addMsg(t, x) {
@@ -112,6 +144,7 @@
             d.className = `msg ${t}`; d.innerText = x;
             c.appendChild(d); c.scrollTop = c.scrollHeight;
         }
+
         window.onload = init;
     </script>
 </body>
