@@ -1,39 +1,62 @@
 :root { --red: #ff3b30; --border: #222; }
 * { box-sizing: border-box; }
-body { margin: 0; background: #000; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
+body { 
+    margin: 0; background: #000; color: #fff; font-family: sans-serif; 
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden; 
+}
 
-.header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 1px solid var(--border); }
-.btn-goto-vip { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; }
+/* Header fija */
+.header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.btn-goto-vip { background: #f1c40f; color: #000; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; }
 
-.main-wrapper { display: flex; flex: 1; width: 100%; }
-.main-content-row { display: flex; flex: 1; width: 100%; }
+/* Banners Horizontales */
+.ad-horizontal { width: 100%; height: 60px; background: #050505; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.ad-placeholder { color: #333; font-size: 10px; font-weight: bold; }
 
-.video-side, .chat-side { flex: 1; display: flex; flex-direction: column; padding: 15px; gap: 15px; }
+/* Wrapper Principal */
+.main-wrapper { display: flex; flex: 1; overflow: hidden; }
 
-.video-box { flex: 1; background: #111; border-radius: 15px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+/* Ads Laterales */
+.ad-side { width: 100px; background: #000; display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); border-left: 1px solid var(--border); flex-shrink: 0; }
+.ad-placeholder-vert { color: #222; transform: rotate(-90deg); font-size: 10px; }
+
+/* Contenido Central */
+.main-content-row { display: flex; flex: 1; overflow: hidden; }
+.video-side, .chat-side { flex: 1; display: flex; flex-direction: column; padding: 15px; gap: 10px; min-width: 0; }
+
+/* Videos */
+.video-box { flex: 1; background: #111; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); position: relative; }
 video { width: 100%; height: 100%; object-fit: cover; }
-.label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; font-size: 10px; }
+.label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; font-size: 10px; z-index: 2; }
 
-#chat { flex: 1; background: #121212; border-radius: 15px; overflow-y: auto; padding: 15px; border: 1px solid var(--border); }
-.msg { margin-bottom: 8px; padding: 10px; border-radius: 10px; max-width: 80%; }
+/* Chat y Botón */
+#chat { flex: 1; background: #121212; border-radius: 12px; overflow-y: auto; padding: 15px; border: 1px solid var(--border); }
+.msg { margin-bottom: 8px; padding: 10px; border-radius: 10px; max-width: 80%; font-size: 14px; }
 .msg.me { background: #007aff; margin-left: auto; }
 .msg.them { background: #262629; }
 
-.chat-controls { width: 100%; }
+.chat-controls { width: 100%; flex-shrink: 0; }
 .input-wrapper { position: relative; display: flex; }
-#chat-input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #1a1a1a; color: #fff; }
-.btn-send-inner { position: absolute; right: 8px; top: 8px; background: var(--red); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; }
+#chat-input { width: 100%; padding: 14px 80px 14px 15px; border-radius: 10px; border: 1px solid var(--border); background: #1a1a1a; color: #fff; outline: none; }
+.btn-send-inner { position: absolute; right: 6px; top: 6px; background: var(--red); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-.btn-next { width: 100%; padding: 18px; background: var(--red); color: #fff; border: none; border-radius: 15px; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
+/* Botón Siguiente: PC ABAJO */
+.btn-next { 
+    width: 100%; padding: 18px; background: var(--red); color: #fff; 
+    border: none; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; order: 3;
+}
 
-/* ORDEN PC: Chat arriba, botón abajo */
-.chat-side { flex-direction: column; }
+.footer { height: 40px; background: #000; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--border); color: #333; font-size: 11px; flex-shrink: 0; }
 
+/* AJUSTES MÓVIL */
 @media (max-width: 800px) {
+    body { overflow-y: auto; height: auto; }
+    .ad-side { display: none; }
     .main-content-row { flex-direction: column; }
-    .video-box { aspect-ratio: 1/1; flex: none; }
-    /* ORDEN MÓVIL: Botón arriba del chat */
-    .chat-side { flex-direction: column; }
-    .btn-next { order: -1; margin-bottom: 10px; }
-    #chat { height: 250px; flex: none; }
+    .video-side { flex: none; height: 60vh; padding: 10px; }
+    .chat-side { flex: none; height: auto; padding: 10px; }
+    #chat { height: 300px; flex: none; }
+    /* BOTÓN ARRIBA EN MÓVIL */
+    .btn-next { order: -1; margin-bottom: 5px; }
+    .ad-horizontal { height: 50px; }
 }
