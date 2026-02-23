@@ -20,7 +20,7 @@
     </div>
 
     <main class="main-wrapper">
-        <aside class="ad-side left-ad"><div class="ad-placeholder-vert">PUBLICIDAD</div></aside>
+        <aside class="ad-side left-ad"><div class="ad-placeholder-vert">ADS</div></aside>
 
         <div class="main-content-row">
             <section class="video-side">
@@ -35,18 +35,21 @@
             </section>
 
             <section class="chat-side">
+                <button class="btn-next mobile-only" onclick="buscar()">SIGUIENTE ➔</button>
+                
                 <div id="chat"></div>
+                
                 <div class="chat-controls">
                     <div class="input-container">
                         <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') enviarMensaje()">
                         <button class="btn-send" onclick="enviarMensaje()">➤</button>
                     </div>
-                    <button class="btn-next" onclick="buscar()">SIGUIENTE ➔</button>
+                    <button class="btn-next desktop-only" onclick="buscar()">SIGUIENTE ➔</button>
                 </div>
             </section>
         </div>
 
-        <aside class="ad-side right-ad"><div class="ad-placeholder-vert">PUBLICIDAD</div></aside>
+        <aside class="ad-side right-ad"><div class="ad-placeholder-vert">ADS</div></aside>
     </main>
 
     <div class="ad-horizontal">
@@ -54,7 +57,7 @@
     </div>
 
     <footer class="footer">
-        <p>&copy; 2026 Roulotte Network | <a href="#">Términos</a></p>
+        <p>&copy; 2026 Roulotte Network | <a href="#" style="color:#888;">Términos</a></p>
     </footer>
 
     <script>
@@ -72,7 +75,7 @@
                 peer = new Peer(myId);
                 peer.on('call', c => { c.answer(myStream); manejarStream(c); });
                 peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
-            } catch (e) { alert("Acceso a cámara denegado o no disponible."); }
+            } catch (e) { console.log("Cámara no lista"); }
         }
 
         async function buscar() {
