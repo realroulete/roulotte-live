@@ -63,18 +63,18 @@
         async function init() {
             myId = 'u-' + Math.random().toString(36).substr(2, 6);
             
-            peer = new Peer(myId, {
-                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }, { 'urls': 'stun:stun1.l.google.com:19302' }] }
-            });
+            // VOLVEMOS A LO SIMPLE: Sin configuración de servidores manual
+            peer = new Peer(myId);
 
             try {
+                // Reducimos la calidad a lo mínimo aceptable (QVGA) para que no vaya lento en móviles
                 myStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 640, height: 480 }, 
+                    video: { width: 320, height: 240, frameRate: { ideal: 15 } }, 
                     audio: true 
                 });
                 document.getElementById('me').srcObject = myStream;
             } catch (e) {
-                console.warn("Cámara no disponible");
+                console.warn("Cámara no activa");
             }
 
             peer.on('call', call => {
@@ -93,17 +93,14 @@
             btn.innerText = "BUSCANDO...";
             btn.disabled = true;
 
-            // 1. Limpiar rastro anterior antes de buscar
+            // Limpieza inmediata
             await supa.from('profiles').delete().eq('peer_id', myId);
             if (actualCall) actualCall.close();
             if (dataConn) dataConn.close();
             document.getElementById('remote').srcObject = null;
 
-            // 2. Intentar pescar a alguien
-            const { data } = await supa.from('profiles')
-                .select('peer_id')
-                .neq('peer_id', myId)
-                .limit(1);
+            // Buscar pareja
+            const { data } = await supa.from('profiles').select('peer_id').neq('peer_id', myId).limit(1);
 
             if (data && data.length > 0) {
                 const targetId = data[0].peer_id;
@@ -121,17 +118,11 @@
                     buscarPareja(); 
                 }
             } else {
-                // 3. Si no hay nadie, nos ponemos en espera RECIÉN AHORA
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
                 btn.innerText = "ESPERANDO...";
-                setTimeout(() => { btn.disabled = false; }, 4000);
+                setTimeout(() => { btn.disabled = false; }, 3000);
             }
         }
-
-        // Limpiar base de datos al cerrar la pestaña
-        window.addEventListener('beforeunload', () => {
-            supa.from('profiles').delete().eq('peer_id', myId);
-        });
 
         function manejarLlamada(call) {
             actualCall = call;
