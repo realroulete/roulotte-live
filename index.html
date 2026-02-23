@@ -3,114 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live - Reset</title>
+    <title>Roulotte Live - Firebase</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         :root { --red: #ff3b30; --border: #222; }
-        * { box-sizing: border-box; font-family: sans-serif; }
-        body { margin: 0; background: #000; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .header { height: 50px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); font-weight: bold; flex-shrink: 0; }
-        .main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; }
-        .video-side { display: flex; flex-direction: column; gap: 10px; flex: 1; }
-        .video-box { flex: 1; background: #111; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .header { height: 50px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); font-weight: bold; letter-spacing: 1px; }
+        .main { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; }
+        .v-grid { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .v-box { flex: 1; background: #111; border-radius: 15px; border: 1px solid var(--border); position: relative; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .btn-next { width: 100%; padding: 20px; background: var(--red); color: #fff; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; }
-        #status { font-size: 12px; color: #ffcc00; text-align: center; background: #222; padding: 5px; border-radius: 5px; }
-        @media (min-width: 800px) { .video-side { flex-direction: row; } }
+        .label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 5px; font-size: 11px; z-index: 10; }
+        .btn-next { width: 100%; padding: 20px; background: var(--red); color: white; border: none; border-radius: 18px; font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.2s; }
+        .btn-next:active { transform: scale(0.98); }
+        .btn-next:disabled { background: #333; opacity: 0.7; }
+        #status { font-size: 11px; color: #666; text-align: center; padding: 5px; height: 25px; }
+        @media (min-width: 800px) { .v-grid { flex-direction: row; } }
     </style>
 </head>
 <body>
-    <header class="header">ROULOTTE LIVE</header>
-    <main class="main-content">
-        <div id="status">ESTADO: Iniciando...</div>
-        <div class="video-side">
-            <div class="video-box"><video id="me" autoplay muted playsinline></video></div>
-            <div class="video-box"><video id="remote" autoplay playsinline></video></div>
+    <div class="header">ROULOTTE LIVE</div>
+    <div class="main">
+        <div class="v-grid">
+            <div class="v-box"><div class="label">TÚ</div><video id="me" autoplay muted playsinline></video></div>
+            <div class="v-box"><div class="label">PAREJA</div><video id="remote" autoplay playsinline></video></div>
         </div>
-        <button class="btn-next" id="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
-    </main>
+        <button id="btn-next" class="btn-next" onclick="buscar()">SIGUIENTE PERSONA ➔</button>
+        <div id="status">Iniciando cámara...</div>
+    </div>
 
     <script>
-        const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
-        const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+        // CONFIGURACIÓN FIREBASE INTEGRADA
+        const firebaseConfig = {
+            apiKey: "AIzaSyCa28DKSvgiHVtDJu2cRhGgH8FUR_9aZfQ",
+            authDomain: "roulottelive.firebaseapp.com",
+            databaseURL: "https://roulottelive-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "roulottelive",
+            storageBucket: "roulottelive.firebasestorage.app",
+            messagingSenderId: "317109934209",
+            appId: "1:317109934209:web:f7c66e9159f9eb248e9580",
+            measurementId: "G-C7HKNR4RFN"
+        };
 
-        let myId = 'user-' + Math.floor(Math.random() * 10000);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const myId = 'u-' + Math.floor(Math.random() * 999999);
         let myStream, peer, actualCall;
 
         async function init() {
-            const status = document.getElementById('status');
             try {
-                // 1. Probar Cámara
-                myStream = await navigator.mediaDevices.getUserMedia({ video: { width: 320 }, audio: true });
+                myStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 480 } }, 
+                    audio: true 
+                });
                 document.getElementById('me').srcObject = myStream;
-                status.innerText = "Cámara OK. Conectando a Peer...";
 
-                // 2. Probar PeerJS
                 peer = new Peer(myId, {
-                    config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }] }
+                    config: { 'iceServers': [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
+                    ]}
                 });
 
-                peer.on('open', async (id) => {
-                    status.innerText = "Conectado a Peer. Registrando en Supabase...";
-                    
-                    // 3. Probar Supabase con reintento
-                    const { error } = await supa.from('waiting_users').upsert([{ peer_id: myId, created_at: new Date().toISOString() }]);
-                    
-                    if (error) {
-                        status.innerText = "ERROR SUPABASE: " + error.message;
-                        console.error(error);
-                    } else {
-                        status.innerText = "TODO LISTO. ID: " + id;
-                    }
+                peer.on('open', id => {
+                    document.getElementById('status').innerText = "CONECTADO: " + id;
+                    // Guardar en Firebase y autolimpieza al cerrar
+                    const userRef = db.ref('online_users/' + myId);
+                    userRef.set({ id: myId, status: 'idle', ts: Date.now() });
+                    userRef.onDisconnect().remove();
                 });
 
                 peer.on('call', call => {
                     actualCall = call;
                     call.answer(myStream);
-                    call.on('stream', s => document.getElementById('remote').srcObject = s);
+                    call.on('stream', s => {
+                        document.getElementById('remote').srcObject = s;
+                        document.getElementById('status').innerText = "EN LLAMADA";
+                    });
                 });
 
             } catch (e) {
-                status.innerText = "ERROR INICIAL: " + e.message;
+                document.getElementById('status').innerText = "Error cámara: " + e.message;
             }
         }
 
         async function buscar() {
-            const status = document.getElementById('status');
             const btn = document.getElementById('btn-next');
             btn.disabled = true;
-            status.innerText = "Buscando pareja activa...";
+            btn.innerText = "BUSCANDO...";
+            document.getElementById('remote').srcObject = null;
+            if(actualCall) actualCall.close();
 
-            // Limpieza de gente vieja
-            const hace10s = new Date(Date.now() - 10000).toISOString();
-            await supa.from('waiting_users').delete().lt('created_at', hace10s);
+            // Buscar alguien disponible en la lista
+            db.ref('online_users').limitToFirst(10).once('value', snapshot => {
+                const users = snapshot.val();
+                let targetId = null;
 
-            // Intentar encontrar a alguien
-            const { data, error } = await supa.from('waiting_users').select('peer_id').neq('peer_id', myId).limit(1);
+                if (users) {
+                    const keys = Object.keys(users).filter(id => id !== myId);
+                    if (keys.length > 0) {
+                        targetId = keys[Math.floor(Math.random() * keys.length)];
+                    }
+                }
 
-            if (data && data.length > 0) {
-                const target = data[0].peer_id;
-                status.innerText = "Llamando a " + target;
-                
-                // Borrarlo para "pescarlo"
-                await supa.from('waiting_users').delete().eq('peer_id', target);
-                
-                const call = peer.call(target, myStream);
-                actualCall = call;
-                call.on('stream', s => {
-                    document.getElementById('remote').srcObject = s;
-                    status.innerText = "EN LÍNEA";
-                    btn.disabled = false;
-                });
-                
-                setTimeout(() => { if(!document.getElementById('remote').srcObject) { btn.disabled = false; buscar(); } }, 5000);
-            } else {
-                await supa.from('waiting_users').upsert([{ peer_id: myId, created_at: new Date().toISOString() }]);
-                status.innerText = "Nadie disponible. Esperando...";
-                setTimeout(() => { btn.disabled = false; }, 2000);
-            }
+                if (targetId) {
+                    document.getElementById('status').innerText = "Llamando a pareja...";
+                    const call = peer.call(targetId, myStream);
+                    actualCall = call;
+                    call.on('stream', s => {
+                        document.getElementById('remote').srcObject = s;
+                        btn.disabled = false;
+                        btn.innerText = "SIGUIENTE PERSONA ➔";
+                    });
+                    // Si no responde en 6 seg, habilitar botón para reintentar
+                    setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PERSONA ➔"; }, 6000);
+                } else {
+                    document.getElementById('status').innerText = "Esperando que alguien entre...";
+                    setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PERSONA ➔"; }, 3000);
+                }
+            });
         }
 
         window.onload = init;
