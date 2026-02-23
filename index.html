@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live - Público</title>
+    <title>Roulotte Live</title>
     <link rel="stylesheet" href="publico.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,7 +18,7 @@
     <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD SUPERIOR</div></div>
 
     <main class="main-wrapper">
-        <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
+        <aside class="ad-side left-ad"><div class="ad-placeholder-vert">ADS</div></aside>
 
         <div class="main-content-row">
             <section class="video-side">
@@ -37,15 +37,17 @@
                 <div id="chat"></div>
                 <div class="chat-controls">
                     <div class="input-wrapper">
-                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <input type="text" id="chat-input" placeholder="Escribe..." onkeypress="if(event.key==='Enter') enviarMensaje()">
                         <button class="btn-send-inner" onclick="enviarMensaje()">ENVIAR</button>
                     </div>
                 </div>
             </section>
         </div>
 
-        <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
+        <aside class="ad-side right-ad"><div class="ad-placeholder-vert">ADS</div></aside>
     </main>
+
+    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD INFERIOR</div></div>
 
     <footer class="footer">
         <p>&copy; 2026 Roulotte Network</p>
@@ -59,13 +61,20 @@
 
         async function init() {
             try {
-                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                // Forzamos constraints para mejor compatibilidad móvil
+                myStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: { ideal: 640 } }, 
+                    audio: true 
+                });
                 document.getElementById('me').srcObject = myStream;
                 myId = 'pub-' + Math.random().toString(36).substr(2, 7);
                 peer = new Peer(myId);
                 peer.on('call', c => { c.answer(myStream); manejarStream(c); });
                 peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
-            } catch (e) { console.error("Error multimedia"); }
+            } catch (e) { 
+                alert("Error: Debes usar HTTPS y aceptar los permisos de cámara."); 
+                console.error(e);
+            }
         }
 
         async function buscar() {
@@ -76,6 +85,7 @@
                 const tid = data[0].peer_id;
                 await supa.from('profiles').delete().eq('peer_id', tid);
                 dataConn = peer.connect(tid);
+                dataConn.on('data', d => addMsg("them", d));
                 manejarStream(peer.call(tid, myStream));
             } else { await supa.from('profiles').upsert([{ peer_id: myId }]); }
         }
