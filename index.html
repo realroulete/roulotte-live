@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live</title>
+    <title>Roulotte Live - Público</title>
     <link rel="stylesheet" href="publico.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,7 +15,9 @@
         <button class="btn-goto-vip" onclick="location.href='registrovip.html'">💎 ACCESO VIP</button>
     </header>
 
-    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD SUPERIOR</div></div>
+    <div class="ad-horizontal">
+        <div class="ad-placeholder">PUBLICIDAD SUPERIOR</div>
+    </div>
 
     <main class="main-wrapper">
         <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
@@ -33,7 +35,7 @@
             </section>
 
             <section class="chat-side">
-                <button class="btn-next" onclick="buscar()">SIGUIENTE ➔</button>
+                <button class="btn-next" id="main-next" onclick="buscar()">SIGUIENTE ➔</button>
                 
                 <div id="chat"></div>
                 
@@ -49,10 +51,12 @@
         <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
     </main>
 
-    <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD INFERIOR</div></div>
+    <div class="ad-horizontal">
+        <div class="ad-placeholder">PUBLICIDAD INFERIOR</div>
+    </div>
 
     <footer class="footer">
-        <p>&copy; 2026 Roulotte Network | <a href="#" style="color:#666; text-decoration:none;">Privacidad</a></p>
+        <p>&copy; 2026 Roulotte Network | <a href="#" style="color:#888; text-decoration:none;">Privacidad</a></p>
     </footer>
 
     <script>
@@ -70,7 +74,7 @@
                 peer = new Peer(myId);
                 peer.on('call', c => { c.answer(myStream); manejarStream(c); });
                 peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
-            } catch (e) { console.error("Error multimedia"); }
+            } catch (e) { console.log("Cámara no lista"); }
         }
 
         async function buscar() {
