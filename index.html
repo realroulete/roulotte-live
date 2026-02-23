@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live Pro - Final</title>
+    <title>Roulotte Live Pro - Final Fix</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -11,49 +11,49 @@
         :root { --red: #ff3b30; --border: #222; --bg: #000; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         
-        body { background: var(--bg); color: #fff; min-height: 100vh; display: flex; flex-direction: column; }
+        body { background: var(--bg); color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Estructura */
         .header { height: 45px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
         .banner-h { height: 50px; background: #050505; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; flex-shrink: 0; }
-        .footer { height: 30px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 9px; color: #444; flex-shrink: 0; }
 
         .main-wrapper { flex: 1; display: flex; min-height: 0; }
         .banner-v { width: 80px; background: #050505; border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; writing-mode: vertical-rl; flex-shrink: 0; }
         .banner-v.right { border-right: none; border-left: 1px solid var(--border); }
 
-        /* Layout */
-        .content { flex: 1; display: flex; padding: 15px; gap: 15px; }
+        .content { flex: 1; display: flex; padding: 15px; gap: 15px; min-height: 0; }
 
         /* Videos 50/50 */
         .video-side { width: 450px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
         .v-box { flex: 1; background: #111; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; background: #000; }
         
-        /* Controles */
         .controls { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
         .c-btn { background: rgba(0,0,0,0.7); border: 1px solid #444; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-        .c-btn.active { background: var(--red); border-color: var(--red); }
         .label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 4px; font-size: 11px; z-index: 5; }
 
-        /* Chat 100% espacio restante */
+        /* Chat y Botón */
         .interaction-side { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 300px; }
         .chat-container { flex: 1; background: #0a0a0a; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
         .chat-msgs { flex: 1; padding: 15px; font-size: 13px; color: #ccc; overflow-y: auto; }
-        .chat-input { padding: 10px; border-top: 1px solid var(--border); }
-        .chat-input input { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; outline: none; }
+        
+        .chat-input-area { padding: 10px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+        .chat-input-area input { flex: 1; background: #111; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; outline: none; }
+        .btn-send { background: var(--red); border: none; color: white; padding: 0 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
         .btn-next { width: 100%; padding: 20px; background: var(--red); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; flex-shrink: 0; }
-        .btn-next:disabled { background: #333; opacity: 0.6; }
+        
+        .banner-bottom { height: 50px; background: #050505; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; flex-shrink: 0; }
 
-        /* Ajustes Móvil con Scroll */
+        /* Móvil Reorganizado */
         @media (max-width: 900px) {
-            body { overflow-y: auto; }
-            .main-wrapper { flex-direction: column; }
+            body { overflow-y: auto; overflow-x: hidden; height: auto; }
+            .main-wrapper { flex-direction: column; height: auto; }
             .banner-v { display: none; }
-            .content { flex-direction: column; height: auto; }
-            .video-side { width: 100%; height: 600px; flex: none; }
+            .content { flex-direction: column; height: auto; padding: 10px; }
+            .video-side { width: 100%; height: 550px; }
             .interaction-side { width: 100%; height: 500px; }
+            /* Botón arriba del chat en móvil */
+            .btn-next { order: -1; margin-bottom: 5px; } 
         }
     </style>
 </head>
@@ -63,20 +63,20 @@
     <div class="banner-h">PUBLICIDAD SUPERIOR</div>
 
     <div class="main-wrapper">
-        <aside class="banner-v">PUBLICIDAD LATERAL</aside>
+        <aside class="banner-v">PUBLICIDAD</aside>
 
         <main class="content">
             <section class="video-side">
-                <div class="v-box" id="box-me">
+                <div class="v-box">
                     <span class="label">TÚ</span>
                     <video id="me" autoplay muted playsinline></video>
                     <div class="controls">
-                        <button class="c-btn" id="btn-mic" onclick="toggleMic()">🎤</button>
-                        <button class="c-btn" id="btn-cam" onclick="toggleCam()">📷</button>
-                        <button class="c-btn" id="btn-flip" onclick="flipCam()">🔄</button>
+                        <button class="c-btn" onclick="toggleMic()">🎤</button>
+                        <button class="c-btn" onclick="toggleCam()">📷</button>
+                        <button class="c-btn" onclick="flipCam()">🔄</button>
                     </div>
                 </div>
-                <div class="v-box" id="box-remote">
+                <div class="v-box">
                     <span class="label">PAREJA</span>
                     <video id="remote" autoplay playsinline></video>
                     <div class="controls">
@@ -87,21 +87,21 @@
             </section>
 
             <section class="interaction-side">
+                <button id="btn-next" class="btn-next" onclick="buscar()">SIGUIENTE PAREJA ➔</button>
                 <div class="chat-container">
-                    <div class="chat-msgs" id="chat"><div>Inicia para buscar pareja...</div></div>
-                    <div class="chat-input">
-                        <input type="text" id="input-chat" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') sendMessage()">
+                    <div class="chat-msgs" id="chat"><div>Pulsa siguiente para conectar...</div></div>
+                    <div class="chat-input-area">
+                        <input type="text" id="input-chat" placeholder="Chat..." onkeypress="if(event.key==='Enter') sendMessage()">
+                        <button class="btn-send" onclick="sendMessage()">ENVIAR</button>
                     </div>
                 </div>
-                <button id="btn-next" class="btn-next" onclick="buscar()">SIGUIENTE PAREJA ➔</button>
-                <div id="status" style="text-align: center; font-size: 10px; color: #555; margin-top: 5px;">Conectando...</div>
             </section>
         </main>
 
-        <aside class="banner-v right">PUBLICIDAD LATERAL</aside>
+        <aside class="banner-v right">PUBLICIDAD</aside>
     </div>
 
-    <footer class="footer">© 2026 ROULOTTE LIVE</footer>
+    <div class="banner-bottom">PUBLICIDAD INFERIOR</div>
 
     <script>
         const firebaseConfig = {
@@ -115,32 +115,24 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-
         const myId = 'u-' + Math.floor(Math.random() * 999999);
-        let myStream, peer, actualCall, currentFacing = "user";
+        let myStream, peer, actualCall, conn;
 
         async function init(facing = "user") {
             try {
                 if(myStream) myStream.getTracks().forEach(t => t.stop());
-                myStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: facing, width: 480 }, 
-                    audio: true 
-                });
+                myStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: 480 }, audio: true });
                 document.getElementById('me').srcObject = myStream;
                 if(!peer) startPeer();
-            } catch (e) { alert("Error de cámara"); }
+            } catch (e) { console.log("Error cámara"); }
         }
 
         function startPeer() {
             peer = new Peer(myId, {
-                config: { 'iceServers': [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
-                ]}
+                config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }]}
             });
 
-            peer.on('open', id => {
-                document.getElementById('status').innerText = "LISTO";
+            peer.on('open', () => {
                 db.ref('online_users/' + myId).set({ id: myId, status: 'idle', ts: Date.now() });
                 db.ref('online_users/' + myId).onDisconnect().remove();
             });
@@ -150,8 +142,17 @@
                 call.answer(myStream);
                 call.on('stream', s => {
                     document.getElementById('remote').srcObject = s;
-                    document.getElementById('chat').innerHTML = "<div>¡Pareja conectada! Di hola...</div>";
+                    document.getElementById('chat').innerHTML = "<div>¡Conectado!</div>";
                     db.ref('online_users/' + myId).update({ status: 'busy' });
+                    document.getElementById('btn-next').disabled = false;
+                    document.getElementById('btn-next').innerText = "SIGUIENTE PAREJA ➔";
+                });
+            });
+
+            peer.on('connection', c => {
+                conn = c;
+                conn.on('data', data => {
+                    document.getElementById('chat').innerHTML += `<div style="color:var(--red)">Pareja: ${data}</div>`;
                 });
             });
         }
@@ -159,67 +160,52 @@
         async function buscar() {
             const btn = document.getElementById('btn-next');
             btn.disabled = true; btn.innerText = "BUSCANDO...";
-            document.getElementById('chat').innerHTML = "<div>Buscando nueva pareja...</div>";
+            document.getElementById('chat').innerHTML = "<div>Buscando...</div>";
             document.getElementById('remote').srcObject = null;
             if(actualCall) actualCall.close();
 
             db.ref('online_users/' + myId).update({ status: 'searching' });
 
-            db.ref('online_users').limitToFirst(20).once('value', snapshot => {
+            db.ref('online_users').once('value', snapshot => {
                 const users = snapshot.val();
-                let partnerFound = false;
-
-                if (users) {
-                    const candidates = Object.values(users).filter(u => u.id !== myId && u.status === 'searching');
-                    if (candidates.length > 0) {
-                        const target = candidates[0];
-                        // Sincronización: El ID menor llama, el mayor espera
-                        if (myId < target.id) {
+                let found = false;
+                if(users) {
+                    const targets = Object.values(users).filter(u => u.id !== myId && u.status === 'searching');
+                    if(targets.length > 0) {
+                        const target = targets[0];
+                        if(myId < target.id) { // Solo llama el ID menor
                             const call = peer.call(target.id, myStream);
                             actualCall = call;
+                            conn = peer.connect(target.id);
                             call.on('stream', s => {
                                 document.getElementById('remote').srcObject = s;
+                                document.getElementById('chat').innerHTML = "<div>¡Conectado!</div>";
                                 db.ref('online_users/' + myId).update({ status: 'busy' });
                                 btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔";
                             });
-                            partnerFound = true;
+                            found = true;
                         }
                     }
                 }
-
-                if(!partnerFound) {
-                    setTimeout(() => { 
-                        btn.disabled = false; 
-                        btn.innerText = "SIGUIENTE PAREJA ➔";
-                    }, 4000);
-                }
+                if(!found) setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔"; }, 4000);
             });
         }
 
-        // --- CONTROLES ---
-        function toggleMic() {
-            const t = myStream.getAudioTracks()[0];
-            t.enabled = !t.enabled;
-            document.getElementById('btn-mic').classList.toggle('active', !t.enabled);
+        function sendMessage() {
+            const input = document.getElementById('input-chat');
+            if(conn && input.value) {
+                conn.send(input.value);
+                document.getElementById('chat').innerHTML += `<div>Tú: ${input.value}</div>`;
+                input.value = '';
+            }
         }
-        function toggleCam() {
-            const t = myStream.getVideoTracks()[0];
-            t.enabled = !t.enabled;
-            document.getElementById('btn-cam').classList.toggle('active', !t.enabled);
-        }
-        function flipCam() {
-            currentFacing = (currentFacing === "user") ? "environment" : "user";
-            init(currentFacing);
-        }
-        async function togglePiP() {
-            if (document.pictureInPictureElement) await document.exitPictureInPicture();
-            else await document.getElementById('remote').requestPictureInPicture();
-        }
-        function toggleFull() {
-            const b = document.getElementById('box-remote');
-            if (!document.fullscreenElement) b.requestFullscreen();
-            else document.exitFullscreen();
-        }
+
+        // Mantenemos funciones toggleMic, toggleCam, flipCam, togglePiP, toggleFull...
+        function toggleMic(){ const t=myStream.getAudioTracks()[0]; t.enabled=!t.enabled; }
+        function toggleCam(){ const t=myStream.getVideoTracks()[0]; t.enabled=!t.enabled; }
+        function flipCam(){ init(document.getElementById('me').srcObject.getVideoTracks()[0].getSettings().facingMode === 'user' ? 'environment' : 'user'); }
+        function togglePiP(){ document.getElementById('remote').requestPictureInPicture(); }
+        function toggleFull(){ document.getElementById('box-remote').requestFullscreen(); }
 
         window.onload = () => init();
     </script>
