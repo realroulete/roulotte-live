@@ -40,11 +40,12 @@ video { width: 100%; height: 100%; object-fit: cover; background: #000; }
     color: #fff; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; 
 }
 
+/* El botón aparece abajo en PC por el orden del HTML */
 .btn-next { 
     width: 100%; padding: 20px; background: var(--red); color: #fff; 
-    border: none; border-radius: 15px; font-weight: 900; font-size: 1.1rem; cursor: pointer; order: 3;
+    border: none; border-radius: 15px; font-weight: 900; font-size: 1.1rem; cursor: pointer;
 }
-.btn-next:disabled { background: #444; cursor: wait; }
+.btn-next:disabled { background: #444; cursor: not-allowed; }
 
 .footer { height: 40px; background: #000; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--border); color: #333; font-size: 11px; flex-shrink: 0; }
 
@@ -53,7 +54,8 @@ video { width: 100%; height: 100%; object-fit: cover; background: #000; }
     .ad-side { display: none; }
     .main-content-row { flex-direction: column; }
     .video-side { flex: none; height: 60vh; padding: 10px; }
-    .chat-side { flex: none; height: auto; padding: 10px; }
+    /* En móvil forzamos el botón arriba con flex-direction */
+    .chat-side { flex: none; height: auto; padding: 10px; display: flex; flex-direction: column; }
+    .btn-next { order: -1; margin-bottom: 10px; padding: 15px; font-size: 1rem; }
     #chat { height: 300px; flex: none; }
-    .btn-next { order: -1; margin-bottom: 5px; padding: 15px; font-size: 1rem; }
 }
