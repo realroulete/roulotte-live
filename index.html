@@ -61,31 +61,20 @@
         let myStream, peer, myId, actualCall, dataConn;
 
         async function init() {
-            // Generamos ID único para la sesión
             myId = 'u-' + Math.random().toString(36).substr(2, 6);
             
-            // Configuración WebRTC reforzada para NAT/Firewalls
             peer = new Peer(myId, {
-                config: { 
-                    'iceServers': [
-                        { 'urls': 'stun:stun.l.google.com:19302' },
-                        { 'urls': 'stun:stun1.l.google.com:19302' },
-                        { 'urls': 'stun:stun2.l.google.com:19302' },
-                        { 'urls': 'stun:stun3.l.google.com:19302' },
-                        { 'urls': 'stun:stun4.l.google.com:19302' }
-                    ]
-                }
+                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }, { 'urls': 'stun:stun1.l.google.com:19302' }] }
             });
 
             try {
-                // Resolución balanceada para evitar cortes en móviles
                 myStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
+                    video: { width: 640, height: 480 }, 
                     audio: true 
                 });
                 document.getElementById('me').srcObject = myStream;
             } catch (e) {
-                console.warn("Permiso de cámara denegado");
+                console.warn("Cámara no disponible");
             }
 
             peer.on('call', call => {
@@ -101,15 +90,16 @@
 
         async function buscarPareja() {
             const btn = document.getElementById('btn-next');
-            btn.innerText = "CONECTANDO...";
+            btn.innerText = "BUSCANDO...";
             btn.disabled = true;
 
-            // Limpiar conexiones previas
+            // 1. Limpiar rastro anterior antes de buscar
+            await supa.from('profiles').delete().eq('peer_id', myId);
             if (actualCall) actualCall.close();
             if (dataConn) dataConn.close();
             document.getElementById('remote').srcObject = null;
 
-            // 1. Buscar a alguien en la tabla 'profiles'
+            // 2. Intentar pescar a alguien
             const { data } = await supa.from('profiles')
                 .select('peer_id')
                 .neq('peer_id', myId)
@@ -117,14 +107,10 @@
 
             if (data && data.length > 0) {
                 const targetId = data[0].peer_id;
-                
-                // 2. Intentar borrar el ID (si lo borramos con éxito, somos la pareja oficial)
                 const { error } = await supa.from('profiles').delete().eq('peer_id', targetId);
 
                 if (!error) {
-                    const call = peer.call(targetId, myStream);
-                    manejarLlamada(call);
-                    
+                    manejarLlamada(peer.call(targetId, myStream));
                     dataConn = peer.connect(targetId);
                     dataConn.on('open', () => {
                         dataConn.on('data', d => pintarMsg("them", d));
@@ -132,25 +118,27 @@
                         btn.innerText = "SIGUIENTE PERSONA ➔";
                     });
                 } else {
-                    // Si alguien se adelantó, reintentamos la búsqueda
-                    buscarPareja();
+                    buscarPareja(); 
                 }
             } else {
-                // 3. No hay nadie, nos apuntamos nosotros
+                // 3. Si no hay nadie, nos ponemos en espera RECIÉN AHORA
                 await supa.from('profiles').upsert([{ peer_id: myId }]);
                 btn.innerText = "ESPERANDO...";
-                setTimeout(() => { btn.disabled = false; }, 3000);
+                setTimeout(() => { btn.disabled = false; }, 4000);
             }
         }
+
+        // Limpiar base de datos al cerrar la pestaña
+        window.addEventListener('beforeunload', () => {
+            supa.from('profiles').delete().eq('peer_id', myId);
+        });
 
         function manejarLlamada(call) {
             actualCall = call;
             call.on('stream', s => {
                 const remoteVideo = document.getElementById('remote');
                 remoteVideo.srcObject = s;
-                // Forzar play para navegadores móviles
-                remoteVideo.play().catch(() => {});
-                
+                remoteVideo.play().catch(()=>{});
                 document.getElementById('btn-next').innerText = "SIGUIENTE PERSONA ➔";
                 document.getElementById('btn-next').disabled = false;
             });
