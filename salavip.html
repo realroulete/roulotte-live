@@ -3,24 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Roulotte Live - SALA VIP 💎</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Roulotte - SALA VIP 💎</title>
+    <link rel="stylesheet" href="vip.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <header class="header" style="border-bottom: 2px solid var(--accent);">
+    <header class="header">
         <div class="logo">ROULOTTE VIP 💎</div>
-        <div id="status-container">
-            <span style="color: var(--accent); font-weight: bold; margin-right: 15px;">CONEXIÓN PREMIUM</span>
-            <button class="btn-vip-open" style="background:#444; color:white;" onclick="cerrarSesion()">SALIR</button>
-        </div>
+        <button class="btn-goto-vip" onclick="location.href='index.html'">SALIR</button>
     </header>
 
     <main class="main-wrapper">
-        <aside class="ad-side">ADS VIP</aside>
-
+        <aside class="ad-side">VIP ADS</aside>
         <div class="main-content-row">
             <section class="video-side">
                 <div class="video-container">
@@ -29,118 +25,71 @@
                         <video id="me" autoplay muted playsinline></video>
                     </div>
                     <div class="video-box">
-                        <div id="status-tag" class="label">BUSCANDO PAREJA VIP...</div>
+                        <div id="status-tag" class="label">BUSCANDO VIP...</div>
                         <video id="remote" autoplay playsinline></video>
                     </div>
                 </div>
             </section>
-
             <section class="chat-side">
                 <div id="chat"></div>
                 <div class="chat-controls">
                     <div class="input-container">
-                        <input type="text" id="chat-input" placeholder="Mensaje privado..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <input type="text" id="chat-input" placeholder="Chat Privado..." onkeypress="if(event.key==='Enter') enviarMensaje()">
                         <button class="btn-send" onclick="enviarMensaje()">➤</button>
                     </div>
-                    <button class="btn-next" onclick="buscar()">SIGUIENTE PERSONA VIP ➔</button>
+                    <button class="btn-next" onclick="buscar()">SIGUIENTE VIP ➔</button>
                 </div>
             </section>
         </div>
-
-        <aside class="ad-side">ADS VIP</aside>
+        <aside class="ad-side">VIP ADS</aside>
     </main>
 
     <script>
-        // --- CONFIGURACIÓN SUPABASE ---
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
-        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE
-";
+        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
         let myStream, peer, myId, actualCall, dataConn;
 
-        // 1. PROTEGER LA PÁGINA: Si no hay login, redirigir a registro
         async function verificarAcceso() {
             const { data: { user } } = await supa.auth.getUser();
-            if (!user) {
-                window.location.href = "registrovip.html";
-            } else {
-                init();
-            }
+            if (!user) { location.href = "registrovip.html"; } else { init(); }
         }
 
         async function init() {
             try {
-                // En VIP pedimos máxima calidad de video
-                myStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 1280, height: 720 }, 
-                    audio: true 
-                });
+                myStream = await navigator.mediaDevices.getUserMedia({ video: {width:1280, height:720}, audio: true });
                 document.getElementById('me').srcObject = myStream;
-                conectarPeer();
-            } catch (e) {
-                alert("La sala VIP requiere permisos de cámara y micro.");
-            }
-        }
-
-        function conectarPeer() {
-            // Usamos prefijo vip para los IDs
-            myId = 'vip-' + Math.random().toString(36).substr(2, 7);
-            
-            // Mañana aquí pegaremos el objeto 'config' de Twilio
-            peer = new Peer(myId); 
-
-            peer.on('call', c => {
-                c.answer(myStream);
-                manejarStream(c);
-            });
-
-            peer.on('connection', c => {
-                dataConn = c;
-                c.on('data', d => addMsg("them", d));
-            });
-        }
-
-        function manejarStream(c) {
-            actualCall = c;
-            c.on('stream', s => {
-                const r = document.getElementById('remote');
-                r.srcObject = s;
-                r.play().catch(() => {});
-                document.getElementById('status-tag').innerText = "CONEXIÓN VIP ACTIVA";
-            });
+                myId = 'vip-' + Math.random().toString(36).substr(2, 7);
+                peer = new Peer(myId);
+                peer.on('call', c => { c.answer(myStream); manejarStream(c); });
+                peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
+            } catch (e) { alert("Error cámara VIP"); }
         }
 
         async function buscar() {
             if(actualCall) actualCall.close();
             document.getElementById('remote').srcObject = null;
-            document.getElementById('status-tag').innerText = "BUSCANDO...";
-            
-            // BUSCAMOS SOLO EN LA TABLA VIP
             const { data } = await supa.from('vip_room').select('peer_id').neq('peer_id', myId).limit(1);
-
             if (data && data.length > 0) {
                 const tid = data[0].peer_id;
                 await supa.from('vip_room').delete().eq('peer_id', tid);
-                
                 dataConn = peer.connect(tid);
                 dataConn.on('data', d => addMsg("them", d));
-                
-                const call = peer.call(tid, myStream);
-                manejarStream(call);
+                manejarStream(peer.call(tid, myStream));
             } else {
-                // Registrarse en la lista de espera VIP
                 await supa.from('vip_room').upsert([{ peer_id: myId }]);
             }
         }
 
+        function manejarStream(c) {
+            actualCall = c;
+            c.on('stream', s => { document.getElementById('remote').srcObject = s; });
+        }
+
         function enviarMensaje() {
             const i = document.getElementById('chat-input');
-            if (i.value && dataConn) {
-                dataConn.send(i.value);
-                addMsg("me", i.value);
-                i.value = "";
-            }
+            if (i.value && dataConn) { dataConn.send(i.value); addMsg("me", i.value); i.value = ""; }
         }
 
         function addMsg(t, x) {
@@ -152,12 +101,6 @@
             c.scrollTop = c.scrollHeight;
         }
 
-        async function cerrarSesion() {
-            await supa.auth.signOut();
-            window.location.href = "index.html";
-        }
-
-        // Iniciar verificando si es usuario real
         verificarAcceso();
     </script>
 </body>
