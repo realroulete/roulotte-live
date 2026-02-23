@@ -33,20 +33,22 @@ video { width: 100%; height: 100%; object-fit: cover; }
 .label { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 5px; font-size: 10px; z-index: 5; }
 
 #chat { flex: 1; background: var(--card); border-radius: 15px; overflow-y: auto; padding: 15px; border: 1px solid var(--border); }
-.msg { margin-bottom: 10px; padding: 10px; border-radius: 10px; max-width: 85%; font-size: 14px; }
+.msg { margin-bottom: 10px; padding: 12px; border-radius: 12px; max-width: 85%; font-size: 14px; }
 .msg.me { background: #007aff; margin-left: auto; }
 .msg.them { background: #262629; }
 
-/* INPUT ALINEADO A LA DERECHA CON FLEX */
 .chat-controls { width: 100%; }
-.input-row { display: flex; gap: 8px; width: 100%; }
+.input-wrapper { position: relative; display: flex; width: 100%; }
+
 #chat-input { 
-    flex: 1; padding: 15px; border-radius: 10px; border: 1px solid var(--border); 
+    width: 100%; padding: 15px 80px 15px 15px; border-radius: 12px; border: 1px solid var(--border); 
     background: #1a1a1a; color: white; outline: none; font-size: 16px;
 }
-.btn-send { 
-    background: var(--red); color: white; border: none; padding: 0 20px; 
-    border-radius: 10px; font-weight: bold; cursor: pointer;
+
+.btn-send-inner { 
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: var(--red); color: white; border: none; padding: 8px 15px; 
+    border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px;
 }
 
 .btn-next { 
@@ -56,11 +58,12 @@ video { width: 100%; height: 100%; object-fit: cover; }
 
 .footer { background: #000; padding: 20px; text-align: center; color: #444; border-top: 1px solid var(--border); }
 
-/* MÓVIL */
 @media (max-width: 800px) {
     .main-wrapper { flex-direction: column; }
     .ad-side { display: none; }
     .main-content-row { flex-direction: column; }
-    .video-box { aspect-ratio: 1/1; flex: none; }
+    .video-side { padding: 10px; }
+    .video-box { aspect-ratio: 1/1; flex: none; width: 100%; }
+    .chat-side { padding: 10px; }
     .btn-next { order: -1; margin-bottom: 5px; }
 }
