@@ -18,7 +18,7 @@
     <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD SUPERIOR</div></div>
 
     <main class="main-wrapper">
-        <aside class="ad-side left-ad"><div class="ad-placeholder-vert">ADS</div></aside>
+        <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
 
         <div class="main-content-row">
             <section class="video-side">
@@ -44,7 +44,7 @@
             </section>
         </div>
 
-        <aside class="ad-side right-ad"><div class="ad-placeholder-vert">ADS</div></aside>
+        <aside class="ad-side"><div class="ad-placeholder-vert">ADS</div></aside>
     </main>
 
     <div class="ad-horizontal"><div class="ad-placeholder">PUBLICIDAD INFERIOR</div></div>
@@ -61,19 +61,14 @@
 
         async function init() {
             try {
-                // Forzamos constraints para mejor compatibilidad móvil
-                myStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user", width: { ideal: 640 } }, 
-                    audio: true 
-                });
+                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('me').srcObject = myStream;
                 myId = 'pub-' + Math.random().toString(36).substr(2, 7);
                 peer = new Peer(myId);
                 peer.on('call', c => { c.answer(myStream); manejarStream(c); });
                 peer.on('connection', c => { dataConn = c; c.on('data', d => addMsg("them", d)); });
-            } catch (e) { 
-                alert("Error: Debes usar HTTPS y aceptar los permisos de cámara."); 
-                console.error(e);
+            } catch (e) {
+                console.log("Esperando permisos o protocolo seguro...");
             }
         }
 
