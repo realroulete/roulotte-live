@@ -1,164 +1,120 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roulotte Live - Final Layout</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <style>
-        :root { --red: #ff3b30; --border: #222; --bg: #000; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        
-        body { background: var(--bg); color: #fff; min-height: 100vh; display: flex; flex-direction: column; }
+<script>
+    // ... (Mantén tu firebaseConfig igual) ...
 
-        /* Estructura fija */
-        .header { height: 45px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
-        .banner-h { height: 50px; background: #050505; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; flex-shrink: 0; }
+    const myId = 'u-' + Math.floor(Math.random() * 999999);
+    let myStream, peer, actualCall, currentFacing = "user";
 
-        /* Contenedor principal con Scroll en móvil */
-        .main-wrapper { flex: 1; display: flex; }
-        
-        .banner-v { width: 100px; background: #050505; border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; writing-mode: vertical-rl; flex-shrink: 0; }
-        .banner-v.right { border-right: none; border-left: 1px solid var(--border); }
-
-        /* Layout Dinámico */
-        .content { flex: 1; display: flex; padding: 15px; gap: 15px; }
-
-        /* 1. Videos: 50/50 verticalmente */
-        .video-side { width: 450px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
-        .v-box { flex: 1; aspect-ratio: 4/3; background: #111; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        .label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 4px; font-size: 11px; z-index: 5; }
-
-        /* 2. Chat: Ocupa el 100% del espacio restante */
-        .interaction-side { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 300px; }
-        .chat-container { flex: 1; background: #0a0a0a; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; min-height: 300px; }
-        .chat-msgs { flex: 1; padding: 15px; font-size: 13px; color: #ccc; overflow-y: auto; }
-        .chat-input { padding: 10px; border-top: 1px solid var(--border); }
-        .chat-input input { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; outline: none; }
-
-        /* Botón bajo el chat */
-        .btn-next { width: 100%; padding: 20px; background: var(--red); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.2s; }
-        .btn-next:active { transform: scale(0.98); }
-
-        /* RESPONSIVE MÓVIL */
-        @media (max-width: 900px) {
-            body { overflow-y: auto; } /* Habilitar Scroll */
-            .main-wrapper { flex-direction: column; }
-            .banner-v { display: none; }
-            .content { flex-direction: column; height: auto; overflow: visible; }
-            .video-side { width: 100%; }
-            .v-box { aspect-ratio: 16/9; flex: none; height: 250px; }
-            .interaction-side { width: 100%; height: 500px; } /* Altura fija para el chat en móvil */
-            .btn-next { order: 2; margin-top: 10px; } /* Botón abajo en móvil también según tu petición */
-        }
-    </style>
-</head>
-<body>
-
-    <header class="header">ROULOTTE LIVE</header>
-    <div class="banner-h">PUBLICIDAD SUPERIOR</div>
-
-    <div class="main-wrapper">
-        <aside class="banner-v">PUBLICIDAD LATERAL</aside>
-
-        <main class="content">
-            <section class="video-side">
-                <div class="v-box"><span class="label">TÚ</span><video id="me" autoplay muted playsinline></video></div>
-                <div class="v-box"><span class="label">PAREJA</span><video id="remote" autoplay playsinline></video></div>
-            </section>
-
-            <section class="interaction-side">
-                <div class="chat-container">
-                    <div class="chat-msgs" id="chat">
-                        <div>Bienvenido. Esperando conexión...</div>
-                    </div>
-                    <div class="chat-input">
-                        <input type="text" placeholder="Escribe un mensaje aquí...">
-                    </div>
-                </div>
-                <button id="btn-next" class="btn-next" onclick="buscar()">SIGUIENTE PAREJA ➔</button>
-                <div id="status" style="text-align: center; font-size: 10px; color: #555; margin-top: 5px;">Iniciando PeerJS...</div>
-            </section>
-        </main>
-
-        <aside class="banner-v right">PUBLICIDAD LATERAL</aside>
-    </div>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCa28DKSvgiHVtDJu2cRhGgH8FUR_9aZfQ",
-            authDomain: "roulottelive.firebaseapp.com",
-            databaseURL: "https://roulottelive-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "roulottelive",
-            storageBucket: "roulottelive.firebasestorage.app",
-            messagingSenderId: "317109934209",
-            appId: "1:317109934209:web:f7c66e9159f9eb248e9580"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        const myId = 'u-' + Math.floor(Math.random() * 999999);
-        let myStream, peer, actualCall;
-
-        async function init() {
-            try {
-                myStream = await navigator.mediaDevices.getUserMedia({ video: { width: 480 }, audio: true });
-                document.getElementById('me').srcObject = myStream;
-
-                peer = new Peer(myId, {
-                    config: { 'iceServers': [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
-                    ]}
-                });
-
-                peer.on('open', id => {
-                    document.getElementById('status').innerText = "ONLINE";
-                    const userRef = db.ref('online_users/' + myId);
-                    userRef.set({ id: myId, ts: Date.now() });
-                    userRef.onDisconnect().remove();
-                });
-
-                peer.on('call', call => {
-                    actualCall = call;
-                    call.answer(myStream);
-                    call.on('stream', s => { document.getElementById('remote').srcObject = s; });
-                });
-            } catch (e) { document.getElementById('status').innerText = "Cámara no disponible"; }
-        }
-
-        async function buscar() {
-            const btn = document.getElementById('btn-next');
-            btn.disabled = true; btn.innerText = "BUSCANDO...";
-            document.getElementById('remote').srcObject = null;
-            if(actualCall) actualCall.close();
-
-            db.ref('online_users').limitToFirst(10).once('value', snapshot => {
-                const users = snapshot.val();
-                let targetId = null;
-                if (users) {
-                    const keys = Object.keys(users).filter(id => id !== myId);
-                    if (keys.length > 0) targetId = keys[Math.floor(Math.random() * keys.length)];
-                }
-
-                if (targetId) {
-                    const call = peer.call(targetId, myStream);
-                    actualCall = call;
-                    call.on('stream', s => {
-                        document.getElementById('remote').srcObject = s;
-                        btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔";
-                    });
-                    setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔"; }, 6000);
-                } else {
-                    document.getElementById('status').innerText = "No hay nadie. Reintentando...";
-                    setTimeout(() => { btn.disabled = false; btn.innerText = "SIGUIENTE PAREJA ➔"; }, 3000);
-                }
+    async function init(facing = "user") {
+        try {
+            if(myStream) myStream.getTracks().forEach(t => t.stop());
+            myStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: facing, width: 480 }, 
+                audio: true 
             });
-        }
-        window.onload = init;
-    </script>
-</body>
-</html>
+            document.getElementById('me').srcObject = myStream;
+            if(!peer) startPeer();
+        } catch (e) { console.error("Error cámara"); }
+    }
+
+    function startPeer() {
+        // Usamos el servidor público de PeerJS o el tuyo si lo tienes
+        peer = new Peer(myId, {
+            host: '0.peerjs.com', // Servidor estándar estable
+            port: 443,
+            secure: true,
+            config: { 'iceServers': [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
+            ]}
+        });
+
+        peer.on('open', id => {
+            actualizarEstado('idle');
+            // Escuchar cambios en la base de datos para autoconexión
+            escucharParejas();
+        });
+
+        peer.on('call', call => {
+            console.log("Recibiendo llamada...");
+            actualCall = call;
+            call.answer(myStream);
+            call.on('stream', s => {
+                document.getElementById('remote').srcObject = s;
+                actualizarEstado('busy');
+            });
+        });
+    }
+
+    function actualizarEstado(estado) {
+        const userRef = db.ref('online_users/' + myId);
+        userRef.set({ id: myId, status: estado, ts: Date.now() });
+        userRef.onDisconnect().remove();
+    }
+
+    function escucharParejas() {
+        // Si alguien nos marca como su objetivo, Firebase puede avisarnos aquí
+        // Pero para simplificar, usaremos la lógica del botón Siguiente
+    }
+
+    async function buscar() {
+        const btn = document.getElementById('btn-next');
+        btn.disabled = true;
+        btn.innerText = "BUSCANDO...";
+        
+        document.getElementById('remote').srcObject = null;
+        if(actualCall) actualCall.close();
+        
+        // Nos ponemos en modo espera
+        actualizarEstado('searching');
+
+        // Buscamos a alguien que esté 'searching' o 'idle'
+        db.ref('online_users').limitToFirst(20).once('value', snapshot => {
+            const users = snapshot.val();
+            let potentialPartner = null;
+
+            if (users) {
+                const candidates = Object.values(users).filter(u => u.id !== myId && u.status !== 'busy');
+                if (candidates.length > 0) {
+                    // Sincronización: El ID menor llama, el ID mayor espera
+                    // Esto evita que ambos llamen al mismo tiempo
+                    potentialPartner = candidates[0];
+                    
+                    if (myId < potentialPartner.id) {
+                        console.log("Yo inicio la llamada a: " + potentialPartner.id);
+                        llamar(potentialPartner.id);
+                    } else {
+                        console.log("Espero a que " + potentialPartner.id + " me llame");
+                        document.getElementById('status').innerText = "Esperando conexión entrante...";
+                    }
+                }
+            }
+
+            // Si en 5 segundos no hay éxito, volvemos a habilitar
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerText = "SIGUIENTE PAREJA ➔";
+                if (!document.getElementById('remote').srcObject) {
+                    document.getElementById('status').innerText = "Nadie disponible, reintenta.";
+                }
+            }, 5000);
+        });
+    }
+
+    function llamar(partnerId) {
+        const call = peer.call(partnerId, myStream);
+        actualCall = call;
+        call.on('stream', s => {
+            document.getElementById('remote').srcObject = s;
+            actualizarEstado('busy');
+            document.getElementById('btn-next').disabled = false;
+            document.getElementById('btn-next').innerText = "SIGUIENTE PAREJA ➔";
+        });
+        
+        // Error handling por si el otro cerró justo ahora
+        call.on('error', err => {
+            console.error(err);
+            buscar();
+        });
+    }
+    // ... (mantén el resto de funciones de mute, cam, etc.)
+</script>
