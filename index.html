@@ -13,64 +13,63 @@
         body { 
             margin: 0; background: #000; color: #fff; 
             height: 100vh; display: flex; flex-direction: column; 
-            overflow: hidden; /* Evita doble scroll */
+            overflow: hidden; 
         }
 
-        .header { height: 50px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; font-weight: bold; }
+        /* Estructura de Banners */
+        .header { height: 50px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); font-weight: bold; flex-shrink: 0; }
+        .ad-horizontal { height: 50px; background: #050505; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); color: #333; font-size: 10px; flex-shrink: 0; }
+        .ad-footer { height: 50px; background: #050505; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--border); color: #333; font-size: 10px; flex-shrink: 0; }
 
-        /* Contenedor principal con scroll solo en móvil */
-        .main-wrapper { 
-            display: flex; flex: 1; overflow-y: auto; 
-        }
+        .main-wrapper { display: flex; flex: 1; overflow: hidden; }
 
         .ad-side { 
-            width: 120px; background: #050505; 
+            width: 100px; background: #050505; 
             display: flex; align-items: center; justify-content: center; 
-            border-left: 1px solid var(--border); border-right: 1px solid var(--border);
-            color: #333; font-size: 12px; flex-shrink: 0;
+            color: #333; font-size: 10px; flex-shrink: 0;
         }
 
+        /* Contenido Central */
         .main-content-row { 
-            flex: 1; display: flex; flex-direction: column; padding: 15px; gap: 15px; 
-            max-width: 1000px; margin: 0 auto; width: 100%;
+            flex: 1; display: flex; flex-direction: column; 
+            padding: 10px; gap: 10px; overflow: hidden;
         }
 
-        .video-side { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .video-side { 
+            display: flex; flex-direction: column; gap: 10px; flex: 1; 
+            min-height: 0; /* Importante para que no desborde */
+        }
         
         .video-box { 
-            flex: 1; min-height: 250px; background: #111; 
+            flex: 1; background: #111; 
             border-radius: 12px; border: 1px solid var(--border); 
             position: relative; overflow: hidden; 
         }
         
         video { width: 100%; height: 100%; object-fit: cover; }
-        .label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 5px; font-size: 11px; z-index: 5; }
+        .label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 3px 6px; border-radius: 4px; font-size: 10px; z-index: 5; }
 
         .btn-next { 
-            width: 100%; padding: 20px; background: var(--red); color: #fff; 
+            width: 100%; padding: 18px; background: var(--red); color: #fff; 
             border: none; border-radius: 12px; font-weight: bold; 
-            font-size: 18px; cursor: pointer; flex-shrink: 0;
-            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.2);
+            font-size: 16px; cursor: pointer; flex-shrink: 0;
         }
-        .btn-next:disabled { background: #333; opacity: 0.7; }
 
-        /* AJUSTES PARA PC */
+        /* AJUSTES RESPONSIVOS */
         @media (min-width: 850px) {
             .video-side { flex-direction: row; }
-            .main-wrapper { overflow: hidden; } /* Fijo en PC */
-            .btn-next { font-size: 22px; padding: 25px; }
+            .ad-side { width: 120px; }
         }
 
-        /* OCULTAR ADS EN MÓVIL PARA GANAR ESPACIO */
         @media (max-width: 600px) {
-            .ad-side { display: none; }
-            .main-content-row { padding: 10px; }
+            .ad-side { display: none; } /* Ocultamos laterales en móvil para ver bien los videos */
         }
     </style>
 </head>
 <body>
 
     <header class="header">ROULOTTE LIVE</header>
+    <div class="ad-horizontal">PUBLICIDAD SUPERIOR</div>
 
     <main class="main-wrapper">
         <aside class="ad-side">ADS</aside>
@@ -93,6 +92,8 @@
         <aside class="ad-side">ADS</aside>
     </main>
 
+    <div class="ad-footer">PUBLICIDAD INFERIOR</div>
+
     <script>
         const SUPA_URL = "https://bojafgtowhtxujsjgqnq.supabase.co";
         const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvamFmZ3Rvd2h0eHVqc2pncW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzM2MjksImV4cCI6MjA4NzI0OTYyOX0.CQLuwkKsNzZ1ZjETl_t2k_Y2glmLUi83fHJCSPzB5KE";
@@ -111,7 +112,7 @@
                 });
                 document.getElementById('me').srcObject = myStream;
             } catch (e) {
-                console.warn("Permiso de cámara denegado");
+                console.warn("Cámara bloqueada");
             }
 
             peer.on('call', call => {
@@ -146,7 +147,7 @@
                 setTimeout(() => { 
                     btn.disabled = false; 
                     btn.innerText = "SIGUIENTE PERSONA ➔"; 
-                }, 4000);
+                }, 3000);
             }
         }
 
